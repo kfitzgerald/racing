@@ -26,6 +26,9 @@ commands:
   race_set_type:
     success: "§eTyp ändrad från `<old_type>` till `<new_type>`."
     error_nochange: "§cRacet typ är redan `<type>`."
+  race_set_start_order:
+    success: "§eStart order changed from `<old_order>` to `<new_order>`."
+    error_nochange: "§cStart order is already set to `<order>`."
   race_set_song:
     success: "§eLåt ändrad från `<old_song>` till `<new_song>`."
     error_nochange: "§cLåt är redan satt till `<song>`."
@@ -105,6 +108,7 @@ commands:
   race_top:
     types:
       fastest: 'Snabbaste'
+      fastest_lap: 'Snabbaste varv'
       most_runs: 'Mest deltagande'
       most_wins: 'Flest vinster'
       win_ratio: 'Störst vinstförhållande'
@@ -122,6 +126,7 @@ validators:
   startpoint_not_found: "§cDet finns ingen startposition `<position>` i race `<race_name>`."
   startpoint_already_exist: "§cDet finns redan en startposition `<position>` i race `<race_name>`."
   type_not_found: "§cDet finns ingen typ `<type>`. Möjliga typer: <types>."
+  start_order_not_found: "§cThere is no start order called `<order>`. Possible orders: <orders>."
   state_not_found: "§cDet finns ingen status `<state>`. Möjliga statusar: <states>."
   song_not_found: "§cDet finns ingen låt med namnet `<song_name>`."
   validate_non_integer: "§c`<argument>` måste vara ett heltal men fick `<received>`.\n\nAnvändning:\n<help_text>"
@@ -182,6 +187,15 @@ race_sign_lines: |
   <race_name>
   §l§8<current_participants>/<max_participants>
   <status>
+race_sign_fastest_lines: |
+  [Race]
+  §a<race_name>
+  §bFastest
+  <laps> Laps
+race_sign_stats_lines: |
+  [Race]
+  §a<race_name>
+  §b<stat_name>
 race_sign_status_not_started: "§8§l• Stängd •"
 race_sign_status_lobby: "§d§l• Lobby •"
 race_sign_status_in_game: "§4§l• I spelet •"
@@ -200,3 +214,18 @@ timeunit.hours: "timmar"
 timeunit.day: "dag"
 timeunit.days: "dagar"
 timeunit.now: "now"
+
+scoreboard.heading_format: "§b§l== <heading> (<laps> laps)=="
+scoreboard.title_format: "§b<title>"
+scoreboard.text_format: "§f<text>"
+scoreboard.world_record: "Serverrekord:"
+scoreboard.world_record_fastest_lap: "SR snabbaste varv:"
+scoreboard.personal_record: "Personligt bästa:"
+scoreboard.time: "Time:"
+scoreboard.fastest_lap: "Snabbaste varv:"
+scoreboard.lap_tag: " Lap"
+scoreboard.no_time_stats: "--:--.---"
+scoreboard.no_name_stats: "---------"
+
+lap.plural: "Varv"
+lap.singular: "varv"

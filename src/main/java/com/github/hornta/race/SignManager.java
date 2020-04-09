@@ -108,7 +108,7 @@ public class SignManager implements Listener {
 
   @EventHandler
   void onLeave(LeaveEvent event) {
-    event.getRaceSession().getRace().getSigns().stream().forEach(this::updateSign);
+    event.getRaceSession().getRace().getSigns().forEach(this::updateSign);
   }
 
   @EventHandler

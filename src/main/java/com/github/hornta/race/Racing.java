@@ -275,7 +275,7 @@ public class Racing extends JavaPlugin {
       .requiresPermission(Permission.RACING_MODIFY.toString());
       
     carbon
-      .addCommand("racing setStartOrder")
+      .addCommand("racing setstartorder")
       .withHandler(new CommandSetStartOrder(racingManager))
       .withArgument(raceArgument)
       .withArgument(

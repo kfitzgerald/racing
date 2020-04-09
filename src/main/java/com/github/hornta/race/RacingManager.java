@@ -4,6 +4,7 @@ import com.github.hornta.race.api.RacingAPI;
 import com.github.hornta.race.enums.*;
 import com.github.hornta.race.events.*;
 import com.github.hornta.carbon.message.MessageManager;
+import com.github.hornta.race.features.TeleportOnLeave;
 import com.github.hornta.race.objects.*;
 import io.papermc.lib.PaperLib;
 import net.milkbowl.vault.economy.Economy;
@@ -17,6 +18,8 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginManager;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -27,6 +30,11 @@ public class RacingManager implements Listener {
   private List<Race> races = new ArrayList<>();
   private RacingAPI api;
   private List<RaceSession> raceSessions = new ArrayList<>();
+
+  RacingManager() {
+    PluginManager pluginManager = Racing.getInstance().getServer().getPluginManager();
+    pluginManager.registerEvents(new TeleportOnLeave(), Racing.getInstance());
+  }
 
   public void shutdown() {
     for (RaceSession raceSession : raceSessions) {
