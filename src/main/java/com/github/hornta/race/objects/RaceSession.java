@@ -939,7 +939,8 @@ public class RaceSession implements Listener {
   void onPlayerInteract(PlayerInteractEvent event) {
     if(
       !isCurrentlyRacing(event.getPlayer()) ||
-      state != RaceSessionState.STARTED
+      state != RaceSessionState.STARTED ||
+      event.getItem() != null
     ) {
       return;
     }

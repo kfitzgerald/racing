@@ -18,11 +18,11 @@ public class CheckpointParticleTask extends BukkitRunnable {
   private static final int NUMBER_ORBS = 2;
   private static final double ANGLE_OFFSET = (2 * Math.PI) / NUMBER_ORBS;
   private double t;
-  private RaceCheckpoint checkpoint;
-  private boolean isEditing;
-  private boolean isLast;
-  private RGB defaultColor;
-  private RGB isInsideColor;
+  private final RaceCheckpoint checkpoint;
+  private final boolean isEditing;
+  private final boolean isLast;
+  private final RGB defaultColor;
+  private final RGB isInsideColor;
 
   public CheckpointParticleTask(RaceCheckpoint checkpoint, boolean isEditing, boolean isLast) {
     this.checkpoint = checkpoint;
@@ -84,16 +84,18 @@ public class CheckpointParticleTask extends BukkitRunnable {
             continue;
           }
 
-          particle.sendPacket(player);
+          if(player.getLocation().getWorld() == checkpoint.getLocation().getWorld()) {
+            particle.sendPacket(player);
+          }
         }
       } else {
         for (Player player : players) {
-          particle.sendPacket(player);
+          if(player.getLocation().getWorld() == checkpoint.getLocation().getWorld()) {
+            particle.sendPacket(player);
+          }
         }
       }
     }
     t += ANGLE_INCREMENT;
   }
-
-
 }

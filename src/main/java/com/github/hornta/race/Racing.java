@@ -1,7 +1,5 @@
 package com.github.hornta.race;
 
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
 import com.github.hornta.carbon.*;
 import com.github.hornta.carbon.config.ConfigType;
 import com.github.hornta.carbon.config.Configuration;
@@ -20,7 +18,6 @@ import com.github.hornta.race.enums.TeleportAfterRaceWhen;
 import com.github.hornta.race.mcmmo.McMMOListener;
 import com.github.hornta.race.objects.RaceCommandExecutor;
 import com.gmail.nossr50.mcMMO;
-import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
@@ -41,16 +38,12 @@ public class Racing extends JavaPlugin {
   private boolean isNoteBlockAPILoaded;
   private boolean isHolographicDisplaysLoaded;
   private Economy economy;
-  private Chat chat;
   private Carbon carbon;
   private Translations translations;
   private RacingManager racingManager;
-  private ProtocolManager protocolManager;
   @SuppressWarnings("unused")
   private Metrics metrics;
-  private RaceCommandExecutor raceCommandExecutor;
   private Configuration configuration;
-  private MessageManager messageManager;
 
   public static Racing getInstance() {
     return instance;
@@ -60,21 +53,8 @@ public class Racing extends JavaPlugin {
     return instance.getLogger();
   }
 
-  public ProtocolManager getProtocolManager() {
-    return protocolManager;
-  }
-
   public Economy getEconomy() {
     return economy;
-  }
-
-  public Chat getChat() {
-    return chat;
-  }
-
-  @Override
-  public void onLoad() {
-    protocolManager = ProtocolLibrary.getProtocolManager();
   }
 
   public boolean isNoteBlockAPILoaded() {
@@ -556,13 +536,6 @@ public class Racing extends JavaPlugin {
           economy = rsp.getProvider();
         }
       }
-
-      {
-        RegisteredServiceProvider<Chat> rsp = getServer().getServicesManager().getRegistration(Chat.class);
-        if (rsp != null) {
-          chat = rsp.getProvider();
-        }
-      }
     }
 
     try {
@@ -633,7 +606,7 @@ public class Racing extends JavaPlugin {
     }
 
 
-    messageManager = new MessagesBuilder()
+    MessageManager messageManager = new MessagesBuilder()
       .add(MessageKey.CREATE_RACE_SUCCESS, "commands.create_race.success")
       .add(MessageKey.CREATE_RACE_NAME_OCCUPIED, "commands.create_race.error_name_occupied")
       .add(MessageKey.DELETE_RACE_SUCCESS, "commands.delete_race.success")
@@ -798,7 +771,7 @@ public class Racing extends JavaPlugin {
       getServer().getPluginManager().registerEvents(SongManager.getInstance(), this);
     }
 
-    raceCommandExecutor = new RaceCommandExecutor();
+    RaceCommandExecutor raceCommandExecutor = new RaceCommandExecutor();
     racingManager = new RacingManager();
     SignManager signManager = new SignManager(racingManager);
     DiscordManager discordManager = new DiscordManager();
