@@ -1,16 +1,12 @@
 # https://bukkit.gamepedia.com/Plugin_YAML
-name: Racing
+name: racing
 version: ${project.version}
 description: With Racing you can compete against other players in custom made racing tracks.
-load: POSTWORLD
 author: hornta
-website: https://github.com/hornta/racing
-main: com.github.hornta.race.Racing
-database: false
+website: https://github.com/TrollskogenMC/racing
+main: com.github.hornta.racing.RacingPlugin
 depend: [ProtocolLib]
-#prefix: ""
 softdepend: [NoteBlockAPI, HolographicDisplays, Vault, mcMMO]
-loadbefore: []
 commands:
   racing:
     aliases:

@@ -24,19 +24,13 @@
                         <fileset>
                             <directory>server/plugins</directory>
                             <includes>
-                                <include>racing-*.jar</include>
-                            </includes>
-                        </fileset>
-                        <fileset>
-                            <directory>server-new/plugins</directory>
-                            <includes>
-                                <include>racing-*.jar</include>
+                                <include>${project.artifactId}-*.jar</include>
                             </includes>
                         </fileset>
                         <fileset>
                             <directory>${project.basedir}</directory>
                             <includes>
-                                <include>racing-*.jar</include>
+                                <include>${project.artifactId}-*.jar</include>
                             </includes>
                         </fileset>
                     </filesets>
@@ -62,11 +56,7 @@
                     <relocations>
                         <relocation>
                             <pattern>org.bstats</pattern>
-                            <shadedPattern>com.github.hornta.racing</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>com.github.hornta.carbon</pattern>
-                            <shadedPattern>com.github.hornta.racing.carbon</shadedPattern>
+                            <shadedPattern>${project.groupId}.${project.artifactId}.bstats</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>
@@ -93,15 +83,6 @@
                             <type>jar</type>
                             <overWrite>yes</overWrite>
                             <outputDirectory>${project.basedir}/server/plugins</outputDirectory>
-                            <destFileName>${project.artifactId}-${project.version}.jar</destFileName>
-                        </artifactItem>
-                        <artifactItem>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>${project.artifactId}</artifactId>
-                            <version>${project.version}</version>
-                            <type>jar</type>
-                            <overWrite>yes</overWrite>
-                            <outputDirectory>${project.basedir}/server-new/plugins</outputDirectory>
                             <destFileName>${project.artifactId}-${project.version}.jar</destFileName>
                         </artifactItem>
                         <artifactItem>
@@ -157,47 +138,45 @@
     </repositories>
 
     <dependencies>
-        <!-- Spigot -->
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot</artifactId>
-            <version>1.15-R0.1-SNAPSHOT</version>
+            <version>1.15.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
-        <!-- NoteBlockAPI integration -->
         <dependency>
             <groupId>com.github.koca2000</groupId>
             <artifactId>NoteBlockAPI</artifactId>
-            <version>1.3</version>
+            <version>1.5.0</version>
             <scope>provided</scope>
         </dependency>
-        <!-- mcMMO integration -->
         <dependency>
             <groupId>com.gmail.nossr50.mcMMO</groupId>
             <artifactId>mcMMO</artifactId>
             <version>2.1.70</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Vault integration -->
         <dependency>
             <groupId>com.github.MilkBowl</groupId>
             <artifactId>VaultAPI</artifactId>
             <version>1.7</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Command management -->
         <dependency>
             <groupId>com.github.hornta</groupId>
-            <artifactId>carbon</artifactId>
-            <version>1.5.0-SNAPSHOT</version>
+            <artifactId>versioned-config</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
-        <!-- To read language files from resources folder -->
         <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>0.9.11</version>
+            <groupId>com.github.hornta</groupId>
+            <artifactId>messenger</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
-        <!-- HolographicDisplays integration -->
+        <dependency>
+            <groupId>com.github.hornta</groupId>
+            <artifactId>commando</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>com.gmail.filoghost.holographicdisplays</groupId>
             <artifactId>holographicdisplays-api</artifactId>
@@ -207,10 +186,9 @@
         <dependency>
             <groupId>com.comphenix.protocol</groupId>
             <artifactId>ProtocolLib</artifactId>
-            <version>4.4.0</version>
+            <version>4.5.0</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Discord integration -->
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
@@ -222,11 +200,10 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- metrics -->
         <dependency>
             <groupId>org.bstats</groupId>
             <artifactId>bstats-bukkit</artifactId>
-            <version>1.5</version>
+            <version>1.7</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
