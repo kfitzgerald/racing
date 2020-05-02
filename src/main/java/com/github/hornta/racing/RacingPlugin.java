@@ -97,9 +97,9 @@ public class RacingPlugin extends JavaPlugin {
 
     setupConfig();
     setupMessages();
-    setupCommands();
     setupNoteBlockAPI();
     setupObjects();
+    setupCommands();
   }
 
   @Override
