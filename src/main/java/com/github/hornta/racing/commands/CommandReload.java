@@ -1,7 +1,7 @@
 package com.github.hornta.racing.commands;
 
 import com.github.hornta.commando.ICommandHandler;
-import com.github.hornta.carbon.message.Translation;
+import com.github.hornta.messenger.Translation;
 import com.github.hornta.racing.ConfigKey;
 import com.github.hornta.racing.RacingPlugin;
 import com.github.hornta.racing.api.ParseRaceException;
