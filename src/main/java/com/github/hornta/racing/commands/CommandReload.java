@@ -14,15 +14,7 @@ import org.bukkit.command.CommandSender;
 public class CommandReload implements ICommandHandler {
   @Override
   public void handle(CommandSender commandSender, String[] args, int typedArgs) {
-    try {
-      RacingPlugin.getInstance().getConfiguration().reload();
-    } catch (Exception e) {
-      MessageManager.sendMessage(commandSender, MessageKey.RELOAD_FAILED);
-      return;
-    }
-
-    Bukkit.getPluginManager().callEvent(new ConfigReloadedEvent());
-
+    RacingPlugin.getInstance().getConfiguration().reload();
     Translation translation = RacingPlugin.getInstance().getTranslations().createTranslation(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.LANGUAGE));
     MessageManager.getInstance().setTranslation(translation);
 
@@ -37,6 +29,7 @@ public class CommandReload implements ICommandHandler {
         return;
       }
     }
+    Bukkit.getPluginManager().callEvent(new ConfigReloadedEvent());
 
     MessageManager.sendMessage(commandSender, MessageKey.RELOAD_SUCCESS);
   }
