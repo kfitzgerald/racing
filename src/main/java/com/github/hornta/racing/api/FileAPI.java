@@ -2,7 +2,19 @@ package com.github.hornta.racing.api;
 
 import com.github.hornta.racing.ConfigKey;
 import com.github.hornta.racing.RacingPlugin;
-import com.github.hornta.racing.api.migrations.*;
+import com.github.hornta.racing.api.migrations.CommandsMigration;
+import com.github.hornta.racing.api.migrations.EntryFeeMigration;
+import com.github.hornta.racing.api.migrations.HorseAttributesMigration;
+import com.github.hornta.racing.api.migrations.MinimumRequiredParticipantsToStartMigration;
+import com.github.hornta.racing.api.migrations.PigSpeedMigration;
+import com.github.hornta.racing.api.migrations.PotionEffectsMigration;
+import com.github.hornta.racing.api.migrations.RaceDurationMigration;
+import com.github.hornta.racing.api.migrations.ResultsMigration;
+import com.github.hornta.racing.api.migrations.SignLapsMigration;
+import com.github.hornta.racing.api.migrations.SignTypeMigration;
+import com.github.hornta.racing.api.migrations.SignsMigration;
+import com.github.hornta.racing.api.migrations.StartOrderMigration;
+import com.github.hornta.racing.api.migrations.WalkSpeedMigration;
 import com.github.hornta.racing.enums.RaceCommandType;
 import com.github.hornta.racing.enums.RaceSignType;
 import com.github.hornta.racing.enums.RaceState;
@@ -28,7 +40,15 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.time.DateTimeException;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -70,9 +90,9 @@ public class FileAPI implements RacingAPI {
   private static final String HORSE_JUMP_STRENGTH_FIELD = "horse_jump_strength";
   public static final String COMMANDS_FIELD = "commands";
 
-  private ExecutorService fileService = Executors.newSingleThreadExecutor();
-  private File racesDirectory;
-  private MigrationManager migrationManager = new MigrationManager();
+  private final ExecutorService fileService = Executors.newSingleThreadExecutor();
+  private final File racesDirectory;
+  private final MigrationManager migrationManager = new MigrationManager();
 
   public FileAPI(Plugin plugin) {
     racesDirectory = new File(plugin.getDataFolder(), RacingPlugin.getInstance().getConfiguration().get(ConfigKey.FILE_RACE_DIRECTORY));

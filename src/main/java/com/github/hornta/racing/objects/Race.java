@@ -11,32 +11,39 @@ import org.bukkit.event.Listener;
 import org.bukkit.potion.PotionEffectType;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
 
 public class Race implements Listener {
   private final UUID id;
-  private RaceVersion version;
+  private final RaceVersion version;
   private String name;
   private Location spawn;
   private List<RaceCheckpoint> checkpoints;
   private List<RaceStartPoint> startPoints;
   private RaceState state;
-  private Instant createdAt;
+  private final Instant createdAt;
   private RaceType type;
   private StartOrder startOrder;
   private String song;
   private double entryFee;
   private float walkSpeed;
-  private Set<RacePotionEffect> potionEffects;
-  private Set<RaceSign> signs;
-  private int minimimRequiredParticipantsToStart;
+  private final Set<RacePotionEffect> potionEffects;
+  private final Set<RaceSign> signs;
+  private final int minimimRequiredParticipantsToStart;
   private double pigSpeed;
   private double horseSpeed;
   private double horseJumpStrength;
 
-  private Map<UUID, RacePlayerStatistic> resultByPlayerId = new HashMap<>();
-  private Map<RaceStatType, Set<RacePlayerStatistic>> resultsByStat = new HashMap<>();
-  private List<RaceCommand> commands;
+  private final Map<UUID, RacePlayerStatistic> resultByPlayerId = new HashMap<>();
+  private final Map<RaceStatType, Set<RacePlayerStatistic>> resultsByStat = new HashMap<>();
+  private final List<RaceCommand> commands;
 
   public Race(
     UUID id,

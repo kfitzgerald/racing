@@ -58,7 +58,12 @@ commands:
     error_not_started: "§cRace must be started in order to skip preparing."
   reload:
     success: "§eConfiguration has been reloaded."
-    failed: "§cConfiguration couldn't be reloaded. Check the console for possible errors."
+    failed: |-
+      §cConfiguration couldn't be reloaded.
+      Reason: <reason>
+    failed_messages: |-
+      §cMessages couldn't be reloaded.
+      Reason: <reason>
     not_races: "§cRaces has not been reloaded because there are currently ongoing races."
     races_failed: "§cRaces couldn't be reloaded. Error: <error>"
     not_language: "§cLanguage has not been reloaded because the language `<language>` couldn't be found."
@@ -129,10 +134,26 @@ validators:
   start_order_not_found: "§cThere is no start order called `<order>`. Possible orders: <orders>."
   state_not_found: "§cThere is no state called `<state>`. Possible states: <states>."
   song_not_found: "§cThere is not song called `<song_name>`."
-  validate_non_integer: "§cExpected argument `<argument>` to be an integer but got `<received>`.\n\nUsage:\n<help_text>"
-  validate_non_number: "§cExpected argument `<argument>` to be an number but got `<received>`.\n\nUsage:\n<help_text>"
-  min_exceed: "§cExpected argument `<argument>` to be at least `<expected>` but got `<received>`.\n\nUsage:\n<help_text>"
-  max_exceed: "§cExpected argument `<argument>` to be at most `<expected>` but got `<received>`.\n\nUsage:\n<help_text>"
+  validate_non_integer: |-
+    §cExpected argument `<argument>` to be an integer but got `<received>`.
+
+    Usage:
+    <help_text>
+  validate_non_number: |-
+    §cExpected argument `<argument>` to be an number but got `<received>`.
+
+    Usage:
+    <help_text>
+  min_exceed: |-
+    §cExpected argument `<argument>` to be at least `<expected>` but got `<received>`.
+
+    Usage:
+    <help_text>
+  max_exceed: |-
+    §cExpected argument `<argument>` to be at most `<expected>` but got `<received>`.
+
+    Usage:
+    <help_text>
   race_potion_effect_not_found: "§cThere is no potion effect with name `<potion_effect>` in race `<race_name>`."
   potion_effect_not_found: "§cThere is no potion effect with name `<potion_effect>`."
   stat_type_not_found: "§cThere is no stat type with name `<stat_type>`. Possible values: <stat_types>"
@@ -146,7 +167,7 @@ race_death_disqualified: "§e<player_name> died during the race and is now disqu
 race_death_disqualified_target: "§eYou died and is therefore disqualified. Better luck next time."
 edit_no_edit_mode: "§cYou can't change race `<race_name>` because it's not under construction. Type §7/rc setstate <race_name> under_construction§c to put it under construction."
 race_participant_result: "§6#<position>. §e<player_name> has finished race §a<race_name>§e with time <time>."
-race_participate_click_text: "/rc join <race_name>"
+race_participate_click_text: "/racing join <race_name>"
 race_participate_hover_text: "Click here to participate."
 race_participate_text: |
   §eRace §a<race_name>§e has been started and begins in <time_left>.
@@ -175,10 +196,10 @@ race_final_lap_actionbar: "§6Final lap"
 race_type_respawn_start_info: "§eYou can punch the air with your hand to teleport back to the start point."
 race_type_respawn_last_info: "§eYou can punch the air with your hand to teleport back to the last checkpoint."
 race_skipwait_hover_text: "Click here to start instantly"
-race_skipwait_click_text: "/rc skipwait <race_name>"
+race_skipwait_click_text: "/racing skipwait <race_name>"
 race_skipwait: "§e[Skip waiting]"
 race_stop_hover_text: "Click here to stop the race"
-race_stop_click_text: "/rc stop <race_name>"
+race_stop_click_text: "/racing stop <race_name>"
 race_stop: "§e[Stop race]"
 race_sign_registered: "§eSign for race `<race_name>` has been registered."
 race_sign_unregistered: "§eSign for race `<race_name>` has been unregistered."
@@ -202,8 +223,16 @@ race_sign_status_in_game: "§4§l• In game •"
 race_blocked_cmd: "§c<command> is blocked during a race."
 
 no_permission_command: "§cYou don't have permission to execute this command."
-missing_arguments_command: "§cSome arguments for this command is missing.\n\nUsage:\n<usage>"
-command_not_found: "§cCommand wasn't found.\n\nSuggestions:\n<suggestions>"
+missing_arguments_command: |-
+  §cSome arguments for this command is missing.
+
+  Usage:
+  <usage>
+command_not_found: |-
+  §cCommand wasn't found.
+
+  Suggestions:
+  <suggestions>
 
 timeunit.second: "second"
 timeunit.seconds: "seconds"

@@ -58,6 +58,18 @@
                             <pattern>org.bstats</pattern>
                             <shadedPattern>${project.groupId}.${project.artifactId}.bstats</shadedPattern>
                         </relocation>
+                        <relocation>
+                            <pattern>com.github.hornta.messenger</pattern>
+                            <shadedPattern>${project.groupId}.${project.artifactId}.messenger</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.github.hornta.commando</pattern>
+                            <shadedPattern>${project.groupId}.${project.artifactId}.commando</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.github.hornta.versioned-config</pattern>
+                            <shadedPattern>${project.groupId}.${project.artifactId}.versioned-config</shadedPattern>
+                        </relocation>
                     </relocations>
                 </configuration>
             </plugin>

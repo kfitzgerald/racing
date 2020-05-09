@@ -26,13 +26,15 @@ commands:
   race_set_type:
     success: "§eTyp preteku bol zmenený z `<old_type>` na `<new_type>`."
     error_nochange: "§cTyp preteku pre tento pretek je už nastavený na `<type>`."
+  race_set_start_order:
+    success: "§eStart order changed from `<old_order>` to `<new_order>`."
+    error_nochange: "§cStart order is already set to `<order>`."
   race_set_song:
     success: "§eHudba preteku bola zmenená z `<old_song>` na `<new_song>`."
     error_nochange: "§cHudba preteku pre tento pretek je už nastavená na `<song>`."
   race_unset_song:
     success: "§eHudba bola z preteka odstránená."
     error_already_unset: "§cPretek neobsahuje žiadnu hudbu."
-
   start_race:
     error_already_started: "§cPretek už bol zahájený."
     error_missing_startpoint: "§cPretek musí mať aspoň 1 začiatočný bod."
@@ -56,7 +58,12 @@ commands:
     error_not_started: "§cPretek musí byť zahájený aby sa mohla preskočiť príprava."
   reload:
     success: "§eKonfigurácia bola obnovená."
-    failed: "§cKonfiguráciu sa nepodarilo obnoviť. Skontrolujte konzolu pre možné chyby."
+    failed: |-
+      §cConfiguration couldn't be reloaded.
+      Reason: <reason>
+    failed_messages: |-
+      §cMessages couldn't be reloaded.
+      Reason: <reason>
     not_races: "§cPreteky neboli obnovené pretože práve prebiehajú niektoré z nich."
     races_failed: "§cPreteky neboli obnovené. Chyba: <error>"
     not_language: "§cJazykové súbory neboli obnovené pretože jazyk `<language>` nebol nájdený."
@@ -106,6 +113,7 @@ commands:
   race_top:
     types:
       fastest: 'Najrýchlejšie preteky'
+      fastest_lap: 'Fastest Lap'
       most_runs: 'Najviac pretekov'
       most_wins: 'Najviac víťazstiev'
       win_ratio: 'Priemer výhier'
@@ -123,12 +131,29 @@ validators:
   startpoint_not_found: "§cZačiatočná pozícia `<position>` pre pretek `<race_name>` nebola nájdená."
   startpoint_already_exist: "§cZačiatočná pozícia s lokalitou `<position>` už existuje pre pretek `<race_name>`."
   type_not_found: "§cŽiadny typ sa nenazýva `<type>`. Možné typy: <types>."
+  start_order_not_found: "§cThere is no start order called `<order>`. Possible orders: <orders>."
   state_not_found: "§cNeexistuje žiadny status s názvom `<state>`. Možné statusy: <states>."
   song_not_found: "§cNebola nájdená žiadna hudba s názvom `<song_name>`."
-  validate_non_integer: "§cArgument `<argument>` má byť celé číslo, použitý argument`<received>`.\n\nPoužitie:\n<help_text>"
-  validate_non_number: "§cArgument `<argument>` má byť číslo, použitý argument `<received>`.\n\nPoužitie:\n<help_text>"
-  min_exceed: "§cArgument `<argument>` mal byť aspoň `<expected>` ale bol `<received>`.\n\nPoužitie:\n<help_text>"
-  max_exceed: "§cArgument `<argument>` mal byť najviac `<expected>` ale bol `<received>`.\n\nPoužitie:\n<help_text>"
+  validate_non_integer: |-
+    §cArgument `<argument>` má byť celé číslo, použitý argument`<received>`.
+
+    Použitie:
+    <help_text>
+  validate_non_number: |-
+    §cArgument `<argument>` má byť číslo, použitý argument `<received>`.
+
+    Použitie:
+    <help_text>
+  min_exceed: |-
+    §cArgument `<argument>` mal byť aspoň `<expected>` ale bol `<received>`.
+
+    Použitie:
+    <help_text>
+  max_exceed: |-
+    §cArgument `<argument>` mal byť najviac `<expected>` ale bol `<received>`.
+
+    Použitie:
+    <help_text>
   race_potion_effect_not_found: "§cNeexistuje žiadny efekt s názvom `<potion_effect>` pre pretek `<race_name>`."
   potion_effect_not_found: "§cNebol nájdený efekt `<potion_effect>`."
   stat_type_not_found: "§cNie je žiadna štatistika s názvom `<stat_type>`. Možné hodnoty: <stat_types>"
@@ -183,14 +208,31 @@ race_sign_lines: |
   <race_name>
   §l§8<current_participants>/<max_participants>
   <status>
+race_sign_fastest_lines: |
+  [Race]
+  §a<race_name>
+  §bFastest
+  <laps> Laps
+race_sign_stats_lines: |
+  [Race]
+  §a<race_name>
+  §b<stat_name>
 race_sign_status_not_started: "§8§l• Nezačatý •"
 race_sign_status_lobby: "§d§l• Lobby •"
 race_sign_status_in_game: "§4§l• V hre •"
 race_blocked_cmd: "§c<command> je zablokovaný počas preteku."
 
 no_permission_command: "§cNemáš oprávnenia pre použitie tohto príkazu."
-missing_arguments_command: "§cNejaké argumenty chýbajú.\n\nPoužitie:\n<usage>"
-command_not_found: "§cPríkaz nebol nájdený.\n\nNávrhy:\n<suggestions>"
+missing_arguments_command: |-
+  §cNejaké argumenty chýbajú.
+
+  Použitie:
+  <usage>
+command_not_found: |-
+  §cPríkaz nebol nájdený.
+
+  Návrhy:
+  <suggestions>
 
 timeunit.second: "sekunda"
 timeunit.seconds: "sekúnd"
@@ -201,3 +243,18 @@ timeunit.hours: "hodiny"
 timeunit.day: "deň"
 timeunit.days: "dni"
 timeunit.now: "teraz"
+
+scoreboard.heading_format: "§b§l== <heading> (<laps> laps)=="
+scoreboard.title_format: "§b<title>"
+scoreboard.text_format: "§f<text>"
+scoreboard.world_record: "Server record:"
+scoreboard.world_record_fastest_lap: "SR fastest lap:"
+scoreboard.personal_record: "Personal best:"
+scoreboard.time: "Time:"
+scoreboard.fastest_lap: "Fastest lap:"
+scoreboard.lap_tag: " Lap"
+scoreboard.no_time_stats: "--:--.---"
+scoreboard.no_name_stats: "---------"
+
+lap.plural: "Laps"
+lap.singular: "Lap"

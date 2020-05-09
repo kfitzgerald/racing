@@ -1,13 +1,25 @@
 package com.github.hornta.racing.objects;
 
 import com.github.hornta.messenger.MessageManager;
-import com.github.hornta.racing.*;
+import com.github.hornta.racing.ConfigKey;
+import com.github.hornta.racing.MessageKey;
+import com.github.hornta.racing.RacingPlugin;
+import com.github.hornta.racing.ScoreboardManager;
+import com.github.hornta.racing.SongManager;
+import com.github.hornta.racing.Util;
 import com.github.hornta.racing.enums.RaceCommandType;
 import com.github.hornta.racing.enums.RaceSessionState;
 import com.github.hornta.racing.enums.RaceStatType;
 import com.github.hornta.racing.enums.RaceType;
 import com.github.hornta.racing.enums.RespawnType;
-import com.github.hornta.racing.events.*;
+import com.github.hornta.racing.events.CheckpointReachedEvent;
+import com.github.hornta.racing.events.ExecuteCommandEvent;
+import com.github.hornta.racing.events.LeaveEvent;
+import com.github.hornta.racing.events.ParticipateEvent;
+import com.github.hornta.racing.events.RacePlayerGoalEvent;
+import com.github.hornta.racing.events.RaceSessionResultEvent;
+import com.github.hornta.racing.events.RaceSessionStopEvent;
+import com.github.hornta.racing.events.SessionStateChangedEvent;
 import com.xxmicloxx.NoteBlockAPI.model.RepeatMode;
 import com.xxmicloxx.NoteBlockAPI.songplayer.RadioSongPlayer;
 import io.papermc.lib.PaperLib;
@@ -17,7 +29,10 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.command.CommandSender;
@@ -29,45 +44,59 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemDamageEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerKickEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleEnterEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.scoreboard.Team;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 public class RaceSession implements Listener {
   private final UUID id;
   private final CommandSender initiator;
   private final Race race;
   private final int laps;
+  private final List<BukkitTask> startTimerTasks;
+  private final Map<UUID, RacePlayerSession> playerSessions;
+  private final ScoreboardManager scoreboardManager;
 
   private RadioSongPlayer songPlayer;
   private RaceSessionState state;
-  private final List<BukkitTask> startTimerTasks = new ArrayList<>();
   private RaceCountdown countdown;
   private long start;
   private int numFinished;
-  private final Map<UUID, RacePlayerSession> playerSessions = new LinkedHashMap<>();
-  private Team team;
   private RaceSessionResult result;
 
-  private final ScoreboardManager scoreboardManager = new ScoreboardManager();
-
   public RaceSession(CommandSender initiator, Race race, int laps) {
-    this.race = race;
+    this.id = UUID.randomUUID();
     this.initiator = initiator;
+    this.race = race;
     this.laps = laps;
-
-    id = UUID.randomUUID();
+    this.startTimerTasks = new ArrayList<>();
+    this.playerSessions = new LinkedHashMap<>();
+    this.scoreboardManager = new ScoreboardManager();
+    Bukkit.getPluginManager().registerEvents(scoreboardManager, RacingPlugin.getInstance());
 
     if(RacingPlugin.getInstance().isNoteBlockAPILoaded() && race.getSong() != null) {
-      songPlayer = new RadioSongPlayer(SongManager.getSongByName(race.getSong()));
+      this.songPlayer = new RadioSongPlayer(SongManager.getSongByName(race.getSong()));
     }
   }
 
@@ -183,6 +212,7 @@ public class RaceSession implements Listener {
       RacePlayerSession session = playerSessionIterator.next();
       Player player = session.getPlayer();
       if(player == null) {
+        RacingPlugin.debug("Removing player %s from session because they are not online", session.getPlayerName());
         playerSessionIterator.remove();
         for(RacePlayerSession session1 : playerSessions.values()) {
           MessageManager.setValue("player_name", session.getPlayerName());
@@ -215,19 +245,6 @@ public class RaceSession implements Listener {
     }
 
     setState(RaceSessionState.COUNTDOWN);
-
-    String teamName = id.toString().substring(0, 15);
-    team = Bukkit.getScoreboardManager().getMainScoreboard().getTeam(teamName);
-    if(team == null) {
-      team = Bukkit.getScoreboardManager().getMainScoreboard().registerNewTeam(teamName);
-    }
-    if(RacingPlugin.getInstance().getConfiguration().<Boolean>get(ConfigKey.COLLISION_COUNTDOWN)) {
-      team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.ALWAYS);
-    } else {
-      team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-    }
-    team.setAllowFriendlyFire(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.FRIENDLY_FIRE_COUNTDOWN));
-
     if(RacingPlugin.getInstance().getConfiguration().<Boolean>get(ConfigKey.CHECKPOINT_PARTICLES_DURING_RACE)) {
       for (int i = 0; i < race.getCheckpoints().size(); ++i) {
         race.getCheckpoints().get(i).startTask(false, i == race.getCheckpoints().size() - 1);
@@ -241,9 +258,9 @@ public class RaceSession implements Listener {
     String worldRecordFastestLapHolder = "";
     for(RacePlayerStatistic playerStatistics : race.getResultByPlayerId().values())
     {
-      if((long)worldRecord > (long)playerStatistics.getRecord(this.laps))
+      if(worldRecord > playerStatistics.getRecord(this.laps))
       {
-        worldRecord = (long)playerStatistics.getRecord(this.laps);
+        worldRecord = playerStatistics.getRecord(this.laps);
         worldRecordHolder = playerStatistics.getPlayerName();
       }
     }
@@ -261,7 +278,6 @@ public class RaceSession implements Listener {
       session.startCooldown();
       tryIncrementCheckpoint(session);
       startPointIndex += 1;
-      team.addEntry(session.getPlayer().getName());
       scoreboardManager.addScoreboard(session.getPlayer(), race.getName(), this.laps);
       scoreboardManager.updateWorldRecord(session.getPlayer(), worldRecord);
       scoreboardManager.updateWorldRecordHolder(session.getPlayer(), worldRecordHolder);
@@ -281,13 +297,6 @@ public class RaceSession implements Listener {
     countdown = new RaceCountdown(playerSessions.values());
     countdown.start(() -> {
       setState(RaceSessionState.STARTED);
-      team.setAllowFriendlyFire(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.FRIENDLY_FIRE_STARTED));
-      if(RacingPlugin.getInstance().getConfiguration().<Boolean>get(ConfigKey.COLLISION_STARTED)) {
-        team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.ALWAYS);
-      } else {
-        team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-      }
-
       List<PotionEffect> potionEffects = new ArrayList<>();
       for(RacePotionEffect racePotionEffect : race.getPotionEffects()) {
         potionEffects.add(
@@ -362,42 +371,42 @@ public class RaceSession implements Listener {
     List<RacePlayerSession> startOrderSessions = new ArrayList<>(playerSessions.values());
     switch (race.getStartOrder()) {
       case FASTEST:
-        Collections.sort(startOrderSessions, (RacePlayerSession o1, RacePlayerSession o2) -> {
-            long t1 = resultsByPlayerId.containsKey(o1.getPlayerId()) ? resultsByPlayerId.get(o1.getPlayerId()).getRecord(laps) : Long.MAX_VALUE;
-            long t2 = resultsByPlayerId.containsKey(o2.getPlayerId()) ? resultsByPlayerId.get(o2.getPlayerId()).getRecord(laps) : Long.MAX_VALUE;
-            return Long.compare(t1, t2);
-        }) ;
+        startOrderSessions.sort((RacePlayerSession o1, RacePlayerSession o2) -> {
+          long t1 = resultsByPlayerId.containsKey(o1.getPlayerId()) ? resultsByPlayerId.get(o1.getPlayerId()).getRecord(laps) : Long.MAX_VALUE;
+          long t2 = resultsByPlayerId.containsKey(o2.getPlayerId()) ? resultsByPlayerId.get(o2.getPlayerId()).getRecord(laps) : Long.MAX_VALUE;
+          return Long.compare(t1, t2);
+        });
         break;
       case FASTEST_LAP:
-        Collections.sort(startOrderSessions, (RacePlayerSession o1, RacePlayerSession o2) -> {
-            long t1 = resultsByPlayerId.containsKey(o1.getPlayerId()) ? resultsByPlayerId.get(o1.getPlayerId()).getFastestLap() : Long.MAX_VALUE;
-            long t2 = resultsByPlayerId.containsKey(o2.getPlayerId()) ? resultsByPlayerId.get(o2.getPlayerId()).getFastestLap() : Long.MAX_VALUE;
-            return Long.compare(t1, t2);
-        }) ;
+        startOrderSessions.sort((RacePlayerSession o1, RacePlayerSession o2) -> {
+          long t1 = resultsByPlayerId.containsKey(o1.getPlayerId()) ? resultsByPlayerId.get(o1.getPlayerId()).getFastestLap() : Long.MAX_VALUE;
+          long t2 = resultsByPlayerId.containsKey(o2.getPlayerId()) ? resultsByPlayerId.get(o2.getPlayerId()).getFastestLap() : Long.MAX_VALUE;
+          return Long.compare(t1, t2);
+        });
         break;
       case SLOWEST:
-        Collections.sort(startOrderSessions, (RacePlayerSession o1, RacePlayerSession o2) -> {
-            long t1 = resultsByPlayerId.containsKey(o1.getPlayerId()) ? resultsByPlayerId.get(o1.getPlayerId()).getRecord(laps) : Long.MAX_VALUE;
-            long t2 = resultsByPlayerId.containsKey(o2.getPlayerId()) ? resultsByPlayerId.get(o2.getPlayerId()).getRecord(laps) : Long.MAX_VALUE;
-            return Long.compare(t2, t1);
-        }) ;
+        startOrderSessions.sort((RacePlayerSession o1, RacePlayerSession o2) -> {
+          long t1 = resultsByPlayerId.containsKey(o1.getPlayerId()) ? resultsByPlayerId.get(o1.getPlayerId()).getRecord(laps) : Long.MAX_VALUE;
+          long t2 = resultsByPlayerId.containsKey(o2.getPlayerId()) ? resultsByPlayerId.get(o2.getPlayerId()).getRecord(laps) : Long.MAX_VALUE;
+          return Long.compare(t2, t1);
+        });
         break;
       case SLOWEST_LAP:
-        Collections.sort(startOrderSessions, (RacePlayerSession o1, RacePlayerSession o2) -> {
-            long t1 = resultsByPlayerId.containsKey(o1.getPlayerId()) ? resultsByPlayerId.get(o1.getPlayerId()).getFastestLap() : Long.MAX_VALUE;
-            long t2 = resultsByPlayerId.containsKey(o2.getPlayerId()) ? resultsByPlayerId.get(o2.getPlayerId()).getFastestLap() : Long.MAX_VALUE;
-            return Long.compare(t2, t1);
-        }) ;
+        startOrderSessions.sort((RacePlayerSession o1, RacePlayerSession o2) -> {
+          long t1 = resultsByPlayerId.containsKey(o1.getPlayerId()) ? resultsByPlayerId.get(o1.getPlayerId()).getFastestLap() : Long.MAX_VALUE;
+          long t2 = resultsByPlayerId.containsKey(o2.getPlayerId()) ? resultsByPlayerId.get(o2.getPlayerId()).getFastestLap() : Long.MAX_VALUE;
+          return Long.compare(t2, t1);
+        });
         break;
       case RANDOM:
         Collections.shuffle(startOrderSessions);
         break;
       case WINS:
-        Collections.sort(startOrderSessions, (RacePlayerSession o1, RacePlayerSession o2) -> {
-            long t1 = resultsByPlayerId.containsKey(o1.getPlayerId()) ? resultsByPlayerId.get(o1.getPlayerId()).getWins() : 0;
-            long t2 = resultsByPlayerId.containsKey(o2.getPlayerId()) ? resultsByPlayerId.get(o2.getPlayerId()).getWins() : 0;
-            return Long.compare(t1, t2);
-        }) ;
+        startOrderSessions.sort((RacePlayerSession o1, RacePlayerSession o2) -> {
+          long t1 = resultsByPlayerId.containsKey(o1.getPlayerId()) ? resultsByPlayerId.get(o1.getPlayerId()).getWins() : 0;
+          long t2 = resultsByPlayerId.containsKey(o2.getPlayerId()) ? resultsByPlayerId.get(o2.getPlayerId()).getWins() : 0;
+          return Long.compare(t1, t2);
+        });
         break;
       case JOIN_ORDER:
         //do nothing, startOrderSessions is already sorted
@@ -469,19 +478,8 @@ public class RaceSession implements Listener {
 
     numFinished = 0;
 
-    if(team != null) {
-      for(String entry : team.getEntries()) {
-        team.removeEntry(entry);
-      }
-      team.unregister();
-      team = null;
-    }
-
-    if(scoreboardManager.isEnabled())
-    {
-      for (RacePlayerSession session : playerSessions.values()) {
-        scoreboardManager.removeScoreboard(session.getPlayer());
-      }
+    for (RacePlayerSession session : playerSessions.values()) {
+      scoreboardManager.removeScoreboard(session.getPlayer());
     }
 
     HandlerList.unregisterAll(this);
@@ -527,17 +525,13 @@ public class RaceSession implements Listener {
     return playerSessions.containsKey(player.getUniqueId());
   }
 
-  private boolean isCurrentlyRacing(Player player) {
+  public boolean isCurrentlyRacing(Player player) {
     if(!playerSessions.containsKey(player.getUniqueId())) {
       return false;
     }
 
     RacePlayerSession playerSession = playerSessions.get(player.getUniqueId());
-    if(playerSession.isRestored()) {
-      return false;
-    }
-
-    return true;
+    return !playerSession.isRestored();
   }
 
   public int getAmountOfParticipants() {
@@ -624,16 +618,6 @@ public class RaceSession implements Listener {
   }
 
   @EventHandler
-  void onPlayerTeleport(PlayerTeleportEvent event) {
-    if(isCurrentlyRacing(event.getPlayer()) && (
-      event.getCause() == PlayerTeleportEvent.TeleportCause.ENDER_PEARL ||
-        event.getCause() == PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT
-    )) {
-      event.setCancelled(true);
-    }
-  }
-
-  @EventHandler
   void onVehicleMove(VehicleMoveEvent event) {
     if (
       race.getType() != RaceType.MINECART ||
@@ -710,13 +694,6 @@ public class RaceSession implements Listener {
   }
 
   @EventHandler
-  void onFoodLevelChange(FoodLevelChangeEvent event) {
-    if(state == RaceSessionState.STARTED && event.getEntityType() == EntityType.PLAYER && isCurrentlyRacing((Player)event.getEntity())) {
-      event.setCancelled(true);
-    }
-  }
-
-  @EventHandler
   void onEntityTarget(EntityTargetEvent event) {
     if((event.getTarget() instanceof Player) && isCurrentlyRacing((Player) event.getTarget()) && state == RaceSessionState.COUNTDOWN) {
       event.setCancelled(true);
@@ -735,7 +712,7 @@ public class RaceSession implements Listener {
 
   @EventHandler
   void onPlayerJoin(PlayerJoinEvent event) {
-    if(isCurrentlyRacing(event.getPlayer()) && state == RaceSessionState.PREPARING) {
+    if(isParticipating(event.getPlayer()) && state == RaceSessionState.PREPARING) {
      RacePlayerSession playerSession = playerSessions.get(event.getPlayer().getUniqueId());
      playerSession.setPlayer(event.getPlayer());
      tryAndSkipToCountdown();
@@ -746,10 +723,11 @@ public class RaceSession implements Listener {
   void onPlayerQuit(PlayerQuitEvent event) {
     Player player = event.getPlayer();
 
-    if(!isCurrentlyRacing(player)) {
+    if(!isParticipating(player)) {
       return;
     }
 
+    RacingPlugin.debug("Player %s left during race.", event.getPlayer().getName());
     RacePlayerSession playerSession = playerSessions.get(player.getUniqueId());
 
     if (state == RaceSessionState.PREPARING) {

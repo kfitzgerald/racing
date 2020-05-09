@@ -2,13 +2,43 @@ package com.github.hornta.racing;
 
 import com.github.hornta.messenger.MessageManager;
 import com.github.hornta.racing.api.RacingAPI;
-import com.github.hornta.racing.enums.*;
-import com.github.hornta.racing.events.*;
+import com.github.hornta.racing.enums.JoinType;
+import com.github.hornta.racing.enums.Permission;
+import com.github.hornta.racing.enums.RaceCommandType;
+import com.github.hornta.racing.enums.RaceSessionState;
+import com.github.hornta.racing.enums.RaceState;
+import com.github.hornta.racing.enums.StartRaceStatus;
+import com.github.hornta.racing.enums.TeleportAfterRaceWhen;
+import com.github.hornta.racing.events.AddRaceCheckpointEvent;
+import com.github.hornta.racing.events.AddRaceStartPointEvent;
+import com.github.hornta.racing.events.CreateRaceEvent;
+import com.github.hornta.racing.events.DeleteRaceCheckpointEvent;
+import com.github.hornta.racing.events.DeleteRaceEvent;
+import com.github.hornta.racing.events.DeleteRaceStartPointEvent;
+import com.github.hornta.racing.events.ExecuteCommandEvent;
+import com.github.hornta.racing.events.RaceChangeNameEvent;
+import com.github.hornta.racing.events.RaceChangeStateEvent;
+import com.github.hornta.racing.events.RacePlayerGoalEvent;
+import com.github.hornta.racing.events.RaceSessionResultEvent;
+import com.github.hornta.racing.events.RaceSessionStartEvent;
+import com.github.hornta.racing.events.RaceSessionStopEvent;
+import com.github.hornta.racing.events.SessionStateChangedEvent;
+import com.github.hornta.racing.features.AllowTeleport;
+import com.github.hornta.racing.features.DamageParticipants;
+import com.github.hornta.racing.features.FoodLevel;
 import com.github.hornta.racing.features.TeleportOnLeave;
-import com.github.hornta.racing.objects.*;
+import com.github.hornta.racing.objects.PlayerSessionResult;
+import com.github.hornta.racing.objects.Race;
+import com.github.hornta.racing.objects.RaceCheckpoint;
+import com.github.hornta.racing.objects.RacePlayerSession;
+import com.github.hornta.racing.objects.RaceSession;
+import com.github.hornta.racing.objects.RaceStartPoint;
 import io.papermc.lib.PaperLib;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -19,6 +49,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.PluginManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -33,6 +64,9 @@ public class RacingManager implements Listener {
   RacingManager() {
     PluginManager pluginManager = RacingPlugin.getInstance().getServer().getPluginManager();
     pluginManager.registerEvents(new TeleportOnLeave(), RacingPlugin.getInstance());
+    pluginManager.registerEvents(new AllowTeleport(), RacingPlugin.getInstance());
+    pluginManager.registerEvents(new FoodLevel(), RacingPlugin.getInstance());
+    pluginManager.registerEvents(new DamageParticipants(), RacingPlugin.getInstance());
   }
 
   public void shutdown() {
@@ -450,6 +484,7 @@ public class RacingManager implements Listener {
     return new ArrayList<>(races);
   }
 
+  @Nullable
   public RaceSession getParticipatingRace(Player player) {
     for (RaceSession session : raceSessions) {
       if (session.isParticipating(player)) {

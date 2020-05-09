@@ -5,16 +5,19 @@ import java.util.Map;
 
 import com.github.hornta.messenger.MessageManager;
 
+import com.github.hornta.racing.events.ConfigReloadedEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
-public class ScoreboardManager {
+public class ScoreboardManager implements Listener {
 
   // Using teams to identify the various times, using invisible characters so they aren't displayed
   private final String WORLD_RECORD = ChatColor.AQUA.toString();
@@ -33,23 +36,20 @@ public class ScoreboardManager {
   private final String NO_NAME_STATS = "noNameStats";
   private final String LAP_TAG = "personalRecord";
   
-  private final int rowsNeeded;
+  private int rowsNeeded;
 
   //loaded from config files
-  private final boolean enabled;
   private final String headingFormat;
   private final String titleFormat;
   private final String textFormat;
-  private final boolean displayMillis;
+  private boolean displayMillis;
 
-  private Map<String, Boolean> configMap = new HashMap<>();
-  private Map<String, String> translationMap = new HashMap<>();
+  private final Map<String, Boolean> configMap = new HashMap<>();
+  private final Map<String, String> translationMap = new HashMap<>();
 
   /// Public Functions
 
-  public ScoreboardManager()
-  {
-    this.enabled = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_ENABLED);
+  public ScoreboardManager() {
     this.headingFormat = MessageManager.getMessage(MessageKey.SCOREBOARD_HEADING_FORMAT);
     this.titleFormat = MessageManager.getMessage(MessageKey.SCOREBOARD_TITLE_FORMAT);
     this.textFormat = MessageManager.getMessage(MessageKey.SCOREBOARD_TEXT_FORMAT);
@@ -78,52 +78,70 @@ public class ScoreboardManager {
     this.rowsNeeded = calculateNumberOfRowsNeeded();
   }
 
-  public boolean isEnabled() {
-    return enabled;
+  @EventHandler
+  void onConfigReloaded(ConfigReloadedEvent event) {
+    this.displayMillis = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_DISPLAY_MILLISECONDS);
+    configMap.clear();
+    configMap.put(WORLD_RECORD, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_WORLD_RECORD));
+    configMap.put(WORLD_RECORD_HOLDER, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_WORLD_RECORD_HOLDER));
+    configMap.put(WORLD_RECORD_FASTEST_LAP, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_WORLD_RECORD_FASTEST_LAP));
+    configMap.put(WORLD_RECORD_FASTEST_LAP_HOLDER, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_WORLD_RECORD_FASTEST_LAP_HOLDER));
+    configMap.put(PERSONAL_RECORD, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_PERSONAL_RECORD));
+    configMap.put(PERSONAL_RECORD_LAP_TIME, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_PERSONAL_RECORD_FASTEST_LAP));
+    configMap.put(RACE_TIME, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_TIME));
+    configMap.put(RACE_CURRENT_LAP_TIME, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_LAP_TIME));
+    configMap.put(RACE_FASTEST_LAP_TIME, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_FASTEST_LAP));
+    this.rowsNeeded = calculateNumberOfRowsNeeded();
   }
 
-  public void addScoreboard(Player player, String raceName, int laps)
-  {
-    if (this.enabled)
-    {
-      translationMap.put(HEADING, convertHeading(raceName, laps));
-      Scoreboard board = setupScoreboard(player);
-      Team team = board.registerNewTeam(SCOREBOARD_OBJECTIVE);
-      team.addEntry(player.getName());
-  
+  public void addScoreboard(Player player, String raceName, int laps) {
+    translationMap.put(HEADING, convertHeading(raceName, laps));
+    String mainHeading = translationMap.get(HEADING);
+
+    Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
+    Objective objective = board.registerNewObjective(player.getName(), SCOREBOARD_OBJECTIVE, mainHeading);
+    objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+    PlayerScoreboard playerScoreboard = new PlayerScoreboard(board, objective);
+    addWorldRecords(playerScoreboard);
+    addWorldRecordsFastestLap(playerScoreboard);
+    addPersonalRecords(playerScoreboard);
+    addRaceTime(playerScoreboard);
+    addRaceFastestLapTime(playerScoreboard);
+
+    Team team = board.registerNewTeam(SCOREBOARD_OBJECTIVE);
+    team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+    team.addEntry(player.getName());
+
+    if (RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_ENABLED)) {
       player.setScoreboard(board);
     }
   }
   
   public void removeScoreboard(Player player) {
-    if (this.enabled){
-      player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
-    }
+    player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
   }
 
-  public void updateWorldRecord(Player player, long timeMillis)
-  {
+  public void updateWorldRecord(Player player, long timeMillis) {
     updateTime(player, timeMillis, WORLD_RECORD);
   }
 
-  public void updateWorldRecordHolder(Player player, String name)
-  {
-    Scoreboard board = player.getScoreboard();
-    if (board != null && name != "" && configMap.get(WORLD_RECORD_HOLDER))
-    {
-      board.getTeam(WORLD_RECORD_HOLDER).setPrefix(convertText(name));
+  public void updateWorldRecordHolder(Player player, String name) {
+    if(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_ENABLED)) {
+      Scoreboard board = player.getScoreboard();
+      if (!name.isEmpty() && configMap.get(WORLD_RECORD_HOLDER)) {
+        board.getTeam(WORLD_RECORD_HOLDER).setPrefix(convertText(name));
+      }
     }
   }
 
-  public void updateWorldRecordFastestLap(Player player, long timeMillis)
-  {
+  public void updateWorldRecordFastestLap(Player player, long timeMillis) {
     updateTime(player, timeMillis, WORLD_RECORD_FASTEST_LAP);
   }
 
-  public void updateWorldRecordFastestLapHolder(Player player, String name)
-  {
+  public void updateWorldRecordFastestLapHolder(Player player, String name) {
     Scoreboard board = player.getScoreboard();
-    if (board != null && name != "" && configMap.get(WORLD_RECORD_FASTEST_LAP_HOLDER))
+    if (!name.isEmpty() && configMap.get(WORLD_RECORD_FASTEST_LAP_HOLDER))
     {
       board.getTeam(WORLD_RECORD_FASTEST_LAP_HOLDER).setPrefix(convertText(name));
     }
@@ -167,35 +185,14 @@ public class ScoreboardManager {
     }
   }
 
-  private void updateString(Player player, String value, String scoreboardTeam)
-  {
-    if(this.enabled)
-    {
+  private void updateString(Player player, String value, String scoreboardTeam) {
+    if(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_ENABLED)) {
       Scoreboard board = player.getScoreboard();
-      if (board != null && configMap.get(scoreboardTeam))
+      if (configMap.get(scoreboardTeam))
       {
         board.getTeam(scoreboardTeam).setPrefix(convertText(value));
       }
     }
-  }
-
-  private Scoreboard setupScoreboard(Player player)
-  {
-    String mainHeading = translationMap.get(HEADING);
-
-    Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
-    Objective objective = board.registerNewObjective(player.getName(), SCOREBOARD_OBJECTIVE, mainHeading);
-    objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-
-    PlayerScoreboard playerScoreboard = new PlayerScoreboard(board, objective);
-
-    addWorldRecords(playerScoreboard);
-    addWorldRecordsFastestLap(playerScoreboard);
-    addPersonalRecords(playerScoreboard);
-    addRaceTime(playerScoreboard);
-    addRaceFastestLapTime(playerScoreboard);
-
-    return board;
   }
 
   /**
@@ -278,15 +275,12 @@ public class ScoreboardManager {
     }
   }
 
-  private void addRaceFastestLapTime(PlayerScoreboard playerBoard)
-  {
-    if(configMap.get(RACE_FASTEST_LAP_TIME))
-    {
+  private void addRaceFastestLapTime(PlayerScoreboard playerBoard) {
+    if(configMap.get(RACE_FASTEST_LAP_TIME)) {
       Score onlineName = playerBoard.objective.getScore(convertTitle(translationMap.get(RACE_FASTEST_LAP_TIME)));
       onlineName.setScore(playerBoard.decreaseAndGetCount());
 
-      if(configMap.get(RACE_FASTEST_LAP_TIME))
-      {
+      if(configMap.get(RACE_FASTEST_LAP_TIME)) {
         addTeamToEntry(playerBoard, translationMap.get(NO_TIME_STATS), RACE_FASTEST_LAP_TIME);
       }
     }
@@ -335,8 +329,8 @@ public class ScoreboardManager {
 
   private class PlayerScoreboard {
     private int scoreboardCount = rowsNeeded;
-    private Scoreboard scoreboard;
-    private Objective objective;
+    private final Scoreboard scoreboard;
+    private final Objective objective;
 
     public PlayerScoreboard(Scoreboard scoreboard, Objective objective) {
       this.scoreboard = scoreboard;
@@ -348,11 +342,11 @@ public class ScoreboardManager {
     }
   }
 
-  private class MillisecondConverter {
-    private long milliseconds;
-    private long seconds;
-    private long minutes;
-    private long hours;
+  private static class MillisecondConverter {
+    private final long milliseconds;
+    private final long seconds;
+    private final long minutes;
+    private final long hours;
     /**
      * Convert milliseconds into different divisions
      * @param millis

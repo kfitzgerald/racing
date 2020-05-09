@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.UUID;
 
 public class RaceCheckpoint extends RacePoint implements Comparable<RaceCheckpoint> {
-  private int radius;
+  private final int radius;
   private CheckpointParticleTask task;
-  private Vector vector;
-  private List<Player> players = new ArrayList<>();
+  private final Vector vector;
+  private final List<Player> players = new ArrayList<>();
 
   public RaceCheckpoint(UUID id, int position, Location location, int radius) {
     super(id, position, location);

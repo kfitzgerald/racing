@@ -18,8 +18,8 @@ import java.util.Set;
 
 public class SongManager implements Listener {
   private static SongManager instance;
-  private JavaPlugin plugin;
-  private Map<Player, RadioSongPlayer> playerRadios = new HashMap<>();
+  private final JavaPlugin plugin;
+  private final Map<Player, RadioSongPlayer> playerRadios = new HashMap<>();
   private Map<String, Song> songsByName;
   private Set<String> songNames;
 
