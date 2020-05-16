@@ -7,8 +7,16 @@ import com.github.hornta.racing.enums.Permission;
 import com.github.hornta.racing.enums.RaceSessionState;
 import com.github.hornta.racing.enums.RaceStatType;
 import com.github.hornta.racing.enums.RaceSignType;
-import com.github.hornta.racing.events.*;
 import com.github.hornta.messenger.MessageManager;
+import com.github.hornta.racing.events.AddRaceStartPointEvent;
+import com.github.hornta.racing.events.CreateRaceEvent;
+import com.github.hornta.racing.events.DeleteRaceEvent;
+import com.github.hornta.racing.events.DeleteRaceStartPointEvent;
+import com.github.hornta.racing.events.LeaveEvent;
+import com.github.hornta.racing.events.ParticipateEvent;
+import com.github.hornta.racing.events.RaceChangeNameEvent;
+import com.github.hornta.racing.events.RaceSessionStopEvent;
+import com.github.hornta.racing.events.SessionStateChangedEvent;
 import com.github.hornta.racing.objects.Race;
 import com.github.hornta.racing.objects.RaceSession;
 import com.github.hornta.racing.objects.RaceSign;
@@ -22,11 +30,18 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.*;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockEvent;
+import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 
 public class SignManager implements Listener {
@@ -78,32 +93,32 @@ public class SignManager implements Listener {
 
   @EventHandler
   void onRaceChangeName(RaceChangeNameEvent event) {
-    event.getRace().getSigns().stream().forEach(this::updateSign);
+    event.getRace().getSigns().forEach(this::updateSign);
   }
 
   @EventHandler
   void onParticipate(ParticipateEvent event) {
-    event.getRaceSession().getRace().getSigns().stream().forEach(this::updateSign);
+    event.getRaceSession().getRace().getSigns().forEach(this::updateSign);
   }
 
   @EventHandler
   void onSessionStateChanged(SessionStateChangedEvent event) {
-    event.getRaceSession().getRace().getSigns().stream().forEach(this::updateSign);
+    event.getRaceSession().getRace().getSigns().forEach(this::updateSign);
   }
 
   @EventHandler
   void onRaceSessionStop(RaceSessionStopEvent event) {
-    event.getRaceSession().getRace().getSigns().stream().forEach(this::updateSign);
+    event.getRaceSession().getRace().getSigns().forEach(this::updateSign);
   }
 
   @EventHandler
   void onAddRaceStartPoint(AddRaceStartPointEvent event) {
-    event.getRace().getSigns().stream().forEach(this::updateSign);
+    event.getRace().getSigns().forEach(this::updateSign);
   }
 
   @EventHandler
   void onDeleteRaceStartPoint(DeleteRaceStartPointEvent event) {
-    event.getRace().getSigns().stream().forEach(this::updateSign);
+    event.getRace().getSigns().forEach(this::updateSign);
   }
 
   @EventHandler
@@ -136,8 +151,7 @@ public class SignManager implements Listener {
     addSign(race, (Sign)event.getBlock().getState(), event.getPlayer(), Instant.now(), laps, type);
   }
 
-  private void addSign(Race race, Sign sign, Player player, Instant createdAt, int laps, RaceSignType type)
-  {
+  private void addSign(Race race, Sign sign, Player player, Instant createdAt, int laps, RaceSignType type) {
     RaceSign raceSign = new RaceSign(sign, player.getUniqueId(), createdAt, laps, type);
     race.getSigns().add(raceSign);
     racingManager.updateRace(race, () -> {
@@ -272,7 +286,7 @@ public class SignManager implements Listener {
   private void updateSign(RaceSign sign) {
     Race race = racesBySign.get(sign);
 
-    MessageKey messageKey = MessageKey.RACE_SIGN_LINES;
+    MessageKey messageKey;
     switch(sign.getSignType())
     {
       case JOIN:

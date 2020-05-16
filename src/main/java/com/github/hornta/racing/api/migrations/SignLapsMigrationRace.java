@@ -1,23 +1,21 @@
 package com.github.hornta.racing.api.migrations;
 
-import com.github.hornta.racing.api.IFileMigration;
-import com.github.hornta.racing.enums.RaceSignType;
+import com.github.hornta.racing.api.IRaceFileMigration;
 import com.github.hornta.racing.enums.RaceVersion;
-
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.List;
 import java.util.Map;
 
-public class SignTypeMigration implements IFileMigration {
+public class SignLapsMigrationRace implements IRaceFileMigration {
   @Override
   public RaceVersion from() {
-    return RaceVersion.V13;
+    return RaceVersion.V10;
   }
 
   @Override
   public RaceVersion to() {
-    return RaceVersion.V14;
+    return RaceVersion.V11;
   }
 
   @Override
@@ -25,7 +23,7 @@ public class SignTypeMigration implements IFileMigration {
     @SuppressWarnings("unchecked")
     List<Map<String, Object>> entries = (List<Map<String, Object>>)yamlConfiguration.getList("signs");
     for(Map<String, Object> sign : entries) {
-      sign.put("type", RaceSignType.JOIN.name());
+      sign.put("laps", 1);
     }
     yamlConfiguration.set("signs", entries);
   }

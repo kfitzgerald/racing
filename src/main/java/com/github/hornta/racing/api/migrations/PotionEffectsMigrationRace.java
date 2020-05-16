@@ -1,22 +1,23 @@
 package com.github.hornta.racing.api.migrations;
 
-import com.github.hornta.racing.api.IFileMigration;
+import com.github.hornta.racing.api.FileAPI;
+import com.github.hornta.racing.api.IRaceFileMigration;
 import com.github.hornta.racing.enums.RaceVersion;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-public class MinimumRequiredParticipantsToStartMigration implements IFileMigration {
+public class PotionEffectsMigrationRace implements IRaceFileMigration {
   @Override
   public RaceVersion from() {
-    return RaceVersion.V6;
+    return RaceVersion.V3;
   }
 
   @Override
   public RaceVersion to() {
-    return RaceVersion.V7;
+    return RaceVersion.V4;
   }
 
   @Override
   public void migrate(YamlConfiguration yamlConfiguration) {
-    yamlConfiguration.set("min_required_participants_to_start", 1);
+    yamlConfiguration.createSection(FileAPI.POTION_EFFECTS_FIELD);
   }
 }

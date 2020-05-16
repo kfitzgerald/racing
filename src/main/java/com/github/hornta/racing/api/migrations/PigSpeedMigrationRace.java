@@ -1,25 +1,22 @@
 package com.github.hornta.racing.api.migrations;
 
-import com.github.hornta.racing.api.FileAPI;
-import com.github.hornta.racing.api.IFileMigration;
+import com.github.hornta.racing.api.IRaceFileMigration;
 import com.github.hornta.racing.enums.RaceVersion;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import java.util.Collections;
-
-public class CommandsMigration implements IFileMigration {
+public class PigSpeedMigrationRace implements IRaceFileMigration {
   @Override
   public RaceVersion from() {
-    return RaceVersion.V9;
+    return RaceVersion.V7;
   }
 
   @Override
   public RaceVersion to() {
-    return RaceVersion.V10;
+    return RaceVersion.V8;
   }
 
   @Override
   public void migrate(YamlConfiguration yamlConfiguration) {
-    yamlConfiguration.set(FileAPI.COMMANDS_FIELD, Collections.emptyList());
+    yamlConfiguration.set("pig_speed", 0.25D);
   }
 }

@@ -9,6 +9,7 @@ import com.github.hornta.racing.api.ParseRaceException;
 import com.github.hornta.racing.events.ConfigReloadedEvent;
 import com.github.hornta.racing.MessageKey;
 import com.github.hornta.messenger.MessageManager;
+import com.github.hornta.racing.hd_top_list.HDTopListManager;
 import com.github.hornta.versioned_config.ConfigurationException;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -26,6 +27,7 @@ public class CommandReload implements ICommandHandler {
 
     Translation translation;
     try {
+      RacingPlugin.getInstance().getTranslations().saveDefaults();
       translation = RacingPlugin.getInstance().getTranslations().createTranslation(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.LANGUAGE));
     } catch (MessengerException e) {
       MessageManager.setValue("reason", e.getMessage());

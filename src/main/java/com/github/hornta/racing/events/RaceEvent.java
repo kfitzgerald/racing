@@ -4,7 +4,7 @@ import com.github.hornta.racing.objects.Race;
 import org.bukkit.event.Event;
 
 abstract public class RaceEvent extends Event {
-  private Race race;
+  private final Race race;
 
   RaceEvent(Race race) {
     this.race = race;

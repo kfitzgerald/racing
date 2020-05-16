@@ -122,6 +122,41 @@ commands:
     item_none: "§e#<position> §f-"
   race_reset_top:
     success: '§eResultat för race §a<race_name> §e har återställts.'
+  hd_top_list_create:
+    success: |-
+      §eHolografisk topplista skapad.
+    already_exist: |-
+      §cDet finns redan en holografisk topplista med namnet `<name>`.
+    error_no_persist: |-
+      §cHolografisk topplista kunde inte sparas till fil. Kolla konsollen för ett mer detaljerat fel för att försöka lösa problemet annars försvinner topplistan efter nästa omstart.
+  hd_top_list_delete:
+    success: |-
+      §eHolografisk topplista borttagen.
+    error_fail_delete_file: |-
+      §cHolografisk topplista kunde inte raderas. Försök att manuellt radera filen annars så kommer topplistan vara kvar efter nästa omstart.
+  hd_top_list_move:
+    success: |-
+      §eHolografisk topplista har flyttats till din position.
+  hd_top_list_set_race:
+    success: |-
+      §eHolografisk topplista har ändrat race från §a<old_race> §etill §a<new_race>§e.
+  hd_top_list_set_stat:
+    success: |-
+      §eHolografisk topplista har ändrat statistiktyp från §6<old_stat> §etill §6<new_stat>§e.
+  hd_top_list_set_laps:
+    success: |-
+      §eHolografisk topplista har ändrat antalet varv från §6<old_laps> §etill §6<new_laps>§e.
+  hd_top_list_list:
+    header: |-
+      §elHolografiska topplistor:
+    item: |-
+      §6<top_list>
+    item_info: |-
+      §f(§erace: §a<race>§r, §etyp: §6<stat>§r§f)
+    teleport_click: |-
+      /rc hdtoplist teleport <top_list>
+    teleport_hover: |-
+      §l§bTeleportera till topplistan
 
 validators:
   race_not_found: "§cDet finns inget race med namn `<race_name>`."
@@ -157,6 +192,7 @@ validators:
   race_potion_effect_not_found: "§cDet finns ingen trolldryckseffekt med namnet `<potion_effect>` i race `<race_name>`."
   potion_effect_not_found: "§cDet finns ingen trolldryckseffekt med namnet `<potion_effect>`."
   stat_type_not_found: "§cDet finns ingen statistiktyp med namnet `<stat_type>`. Möjliga typer: <stat_types>"
+  hd_top_list_not_found: "§cDet finns ingen holografisk topplista med namnet: `<name>`."
 
 race_canceled: "§cRacet har blivit inställt p.g.a. för få deltagande."
 race_start_noshow_disqualified: "§e<player_name> uteblev från racet och är därmed diskvalificerad."
@@ -258,3 +294,13 @@ scoreboard.no_name_stats: "---------"
 
 lap.plural: "Varv"
 lap.singular: "varv"
+
+hd_top_list.header: |-
+  §a§l§n<race_name>
+  §e§l<stat_type>
+hd_top_list.item: |-
+  §6<position>. §f<player_name> §7- §6<value>
+hd_top_list.none: |-
+  §6<position>. §fn/a
+hd_top_list.footer: |-
+  §e§m-------------

@@ -1,6 +1,12 @@
 package com.github.hornta.racing;
 
-import com.github.hornta.commando.*;
+import com.github.hornta.commando.CarbonArgument;
+import com.github.hornta.commando.CarbonArgumentType;
+import com.github.hornta.commando.CarbonCommand;
+import com.github.hornta.commando.Commando;
+import com.github.hornta.commando.ICarbonArgument;
+import com.github.hornta.commando.ValidationResult;
+import com.github.hornta.commando.ValidationStatus;
 import com.github.hornta.messenger.MessageManager;
 import com.github.hornta.messenger.MessagesBuilder;
 import com.github.hornta.messenger.MessengerException;
@@ -8,11 +14,65 @@ import com.github.hornta.messenger.Translation;
 import com.github.hornta.messenger.Translations;
 import com.github.hornta.racing.api.FileAPI;
 import com.github.hornta.racing.api.StorageType;
-import com.github.hornta.racing.commands.*;
-import com.github.hornta.racing.commands.argumentHandlers.*;
+import com.github.hornta.racing.commands.CommandAddCheckpoint;
+import com.github.hornta.racing.commands.CommandAddPotionEffect;
+import com.github.hornta.racing.commands.CommandAddStartpoint;
+import com.github.hornta.racing.commands.CommandClearPotionEffects;
+import com.github.hornta.racing.commands.CommandCreateRace;
+import com.github.hornta.racing.commands.CommandDeleteCheckpoint;
+import com.github.hornta.racing.commands.CommandDeleteRace;
+import com.github.hornta.racing.commands.CommandDeleteStartpoint;
+import com.github.hornta.racing.commands.CommandHelp;
+import com.github.hornta.racing.commands.CommandInfo;
+import com.github.hornta.racing.commands.CommandJoinRace;
+import com.github.hornta.racing.commands.CommandLeave;
+import com.github.hornta.racing.commands.CommandPlaySong;
+import com.github.hornta.racing.commands.CommandRaceSetSpawn;
+import com.github.hornta.racing.commands.CommandRaceSpawn;
+import com.github.hornta.racing.commands.CommandRaceTeleportPoint;
+import com.github.hornta.racing.commands.CommandRaceTeleportStart;
+import com.github.hornta.racing.commands.CommandRaces;
+import com.github.hornta.racing.commands.CommandReload;
+import com.github.hornta.racing.commands.CommandRemovePotionEffect;
+import com.github.hornta.racing.commands.CommandResetTop;
+import com.github.hornta.racing.commands.CommandSetEntryFee;
+import com.github.hornta.racing.commands.CommandSetHorseJumpStrength;
+import com.github.hornta.racing.commands.CommandSetHorseSpeed;
+import com.github.hornta.racing.commands.CommandSetPigSpeed;
+import com.github.hornta.racing.commands.CommandSetRaceName;
+import com.github.hornta.racing.commands.CommandSetRaceState;
+import com.github.hornta.racing.commands.CommandSetSong;
+import com.github.hornta.racing.commands.CommandSetStartOrder;
+import com.github.hornta.racing.commands.CommandSetType;
+import com.github.hornta.racing.commands.CommandSetWalkSpeed;
+import com.github.hornta.racing.commands.CommandSkipWait;
+import com.github.hornta.racing.commands.CommandStartRace;
+import com.github.hornta.racing.commands.CommandStopRace;
+import com.github.hornta.racing.commands.CommandStopSong;
+import com.github.hornta.racing.commands.CommandTop;
+import com.github.hornta.racing.commands.CommandUnsetSong;
+import com.github.hornta.racing.commands.argumentHandlers.CheckpointArgumentHandler;
+import com.github.hornta.racing.commands.argumentHandlers.RaceArgumentHandler;
+import com.github.hornta.racing.commands.argumentHandlers.RacePotionEffectArgumentHandler;
+import com.github.hornta.racing.commands.argumentHandlers.RaceStatArgumentHandler;
+import com.github.hornta.racing.commands.argumentHandlers.RaceStateArgumentHandler;
+import com.github.hornta.racing.commands.argumentHandlers.RaceTypeArgumentHandler;
+import com.github.hornta.racing.commands.argumentHandlers.SongArgumentHandler;
+import com.github.hornta.racing.commands.argumentHandlers.StartOrderArgumentHandler;
+import com.github.hornta.racing.commands.argumentHandlers.StartPointArgumentHandler;
+import com.github.hornta.racing.hd_top_list.HDTopListManager;
+import com.github.hornta.racing.hd_top_list.commands.CommandCreateHDTopList;
+import com.github.hornta.racing.hd_top_list.commands.CommandDeleteHDTopList;
+import com.github.hornta.racing.hd_top_list.commands.CommandListHDTopList;
+import com.github.hornta.racing.hd_top_list.commands.CommandMoveHDTopList;
+import com.github.hornta.racing.hd_top_list.commands.CommandSetLapsHDTopList;
+import com.github.hornta.racing.hd_top_list.commands.CommandSetRaceHDTopList;
+import com.github.hornta.racing.hd_top_list.commands.CommandSetStatHDTopList;
 import com.github.hornta.racing.enums.Permission;
 import com.github.hornta.racing.enums.RespawnType;
 import com.github.hornta.racing.enums.TeleportAfterRaceWhen;
+import com.github.hornta.racing.hd_top_list.commands.CommandTeleportHDTopList;
+import com.github.hornta.racing.hd_top_list.commands.argumentHandlers.TopListArgumentHandler;
 import com.github.hornta.racing.mcmmo.McMMOListener;
 import com.github.hornta.racing.objects.RaceCommandExecutor;
 import com.github.hornta.versioned_config.Configuration;
@@ -27,21 +87,26 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.IllegalFormatConversionException;
+import java.util.List;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class RacingPlugin extends JavaPlugin {
   private static RacingPlugin instance;
-  private boolean isNoteBlockAPILoaded;
-  private boolean isHolographicDisplaysLoaded;
+  private boolean noteBlockAPILoaded;
+  private boolean holographicDisplaysLoaded;
   private Economy economy;
   private Commando commando;
   private Translations translations;
@@ -61,11 +126,11 @@ public class RacingPlugin extends JavaPlugin {
   }
 
   public boolean isNoteBlockAPILoaded() {
-    return isNoteBlockAPILoaded;
+    return noteBlockAPILoaded;
   }
 
   public boolean isHolographicDisplaysLoaded() {
-    return isHolographicDisplaysLoaded;
+    return holographicDisplaysLoaded;
   }
 
   public Commando getCommando() {
@@ -88,8 +153,8 @@ public class RacingPlugin extends JavaPlugin {
   public void onEnable() {
     instance = this;
     new Metrics(this, 5356);
-    isNoteBlockAPILoaded = Bukkit.getPluginManager().isPluginEnabled("NoteBlockAPI");
-    isHolographicDisplaysLoaded = Bukkit.getPluginManager().isPluginEnabled("HolographicDisplays");
+    noteBlockAPILoaded = Bukkit.getPluginManager().isPluginEnabled("NoteBlockAPI");
+    holographicDisplaysLoaded = Bukkit.getPluginManager().isPluginEnabled("HolographicDisplays");
 
     if (Bukkit.getPluginManager().isPluginEnabled("Vault")) {
       {
@@ -192,165 +257,191 @@ public class RacingPlugin extends JavaPlugin {
       patch.set(ConfigKey.ALLOW_FOOD_LEVEL_CHANGE, "allow_food_level_change", false, Type.BOOLEAN);
       return patch;
     }));
+    cb.addMigration(new Migration<>(2, () -> {
+      Patch<ConfigKey> patch = new Patch<>();
+      patch.set(ConfigKey.HD_TOP_LIST_DIRECTORY, "hd_top_list.directory", "hologram_toplists", Type.STRING);
+      patch.set(ConfigKey.HD_TOP_LIST_SHOW_HEADER, "hd_top_list.show_header", true, Type.BOOLEAN);
+      patch.set(ConfigKey.HD_TOP_LIST_SHOW_FOOTER, "hd_top_list.show_footer", false, Type.BOOLEAN);
+      return patch;
+    }));
     configuration = cb.create();
   }
 
   private void setupMessages() throws MessengerException {
-    MessageManager messageManager = new MessagesBuilder()
-      .add(MessageKey.CREATE_RACE_SUCCESS, "commands.create_race.success")
-      .add(MessageKey.CREATE_RACE_NAME_OCCUPIED, "commands.create_race.error_name_occupied")
-      .add(MessageKey.DELETE_RACE_SUCCESS, "commands.delete_race.success")
-      .add(MessageKey.CHANGE_RACE_NAME_SUCCESS, "commands.change_race_name.success")
-      .add(MessageKey.RACE_ADD_CHECKPOINT_SUCCESS, "commands.race_add_checkpoint.success")
-      .add(MessageKey.RACE_ADD_CHECKPOINT_IS_OCCUPIED, "commands.race_add_checkpoint.error_is_occupied")
-      .add(MessageKey.RACE_DELETE_CHECKPOINT_SUCCESS, "commands.race_delete_checkpoint.success")
-      .add(MessageKey.RACE_ADD_STARTPOINT_SUCCESS, "commands.race_add_startpoint.success")
-      .add(MessageKey.RACE_ADD_STARTPOINT_IS_OCCUPIED, "commands.race_add_startpoint.error_is_occupied")
-      .add(MessageKey.RACE_DELETE_STARTPOINT_SUCCESS, "commands.race_delete_startpoint.success")
-      .add(MessageKey.RACE_SPAWN_NOT_ENABLED, "commands.race_spawn.error_not_enabled")
-      .add(MessageKey.RACE_SET_SPAWN_SUCCESS, "commands.race_set_spawn.success")
-      .add(MessageKey.LIST_RACES_LIST, "commands.list_races.race_list")
-      .add(MessageKey.LIST_RACES_ITEM, "commands.list_races.race_list_item")
-      .add(MessageKey.RACE_SET_TYPE_SUCCESS, "commands.race_set_type.success")
-      .add(MessageKey.RACE_SET_TYPE_NOCHANGE, "commands.race_set_type.error_nochange")
-      .add(MessageKey.RACE_SET_START_ORDER_SUCCESS, "commands.race_set_start_order.success")
-      .add(MessageKey.RACE_SET_START_ORDER_NOCHANGE, "commands.race_set_start_order.error_nochange")
-      .add(MessageKey.RACE_SET_SONG_SUCCESS, "commands.race_set_song.success")
-      .add(MessageKey.RACE_SET_SONG_NOCHANGE, "commands.race_set_song.error_nochange")
-      .add(MessageKey.RACE_UNSET_SONG_SUCCESS, "commands.race_unset_song.success")
-      .add(MessageKey.RACE_UNSET_SONG_ALREADY_UNSET, "commands.race_unset_song.error_already_unset")
-      .add(MessageKey.START_RACE_ALREADY_STARTED, "commands.start_race.error_already_started")
-      .add(MessageKey.START_RACE_MISSING_STARTPOINT, "commands.start_race.error_missing_startpoint")
-      .add(MessageKey.START_RACE_MISSING_CHECKPOINT, "commands.start_race.error_missing_checkpoint")
-      .add(MessageKey.START_RACE_MISSING_CHECKPOINTS, "commands.start_race.error_missing_checkpoints")
-      .add(MessageKey.START_RACE_NOT_ENABLED, "commands.start_race.error_not_enabled")
-      .add(MessageKey.START_RACE_NO_ENABLED, "commands.start_race.error_no_enabled")
-      .add(MessageKey.STOP_RACE_SUCCESS, "commands.stop_race.success")
-      .add(MessageKey.STOP_RACE_NOT_STARTED, "commands.stop_race.error_not_started")
-      .add(MessageKey.JOIN_RACE_SUCCESS, "commands.join_race.success")
-      .add(MessageKey.JOIN_RACE_CHARGED, "commands.join_race.charged")
-      .add(MessageKey.JOIN_RACE_NOT_OPEN, "commands.join_race.error_not_open")
-      .add(MessageKey.JOIN_RACE_IS_FULL, "commands.join_race.error_is_full")
-      .add(MessageKey.JOIN_RACE_IS_PARTICIPATING, "commands.join_race.error_is_participating")
-      .add(MessageKey.JOIN_RACE_IS_PARTICIPATING_OTHER, "commands.join_race.error_is_participating_other")
-      .add(MessageKey.JOIN_RACE_NOT_AFFORD, "commands.join_race.error_not_afford")
-      .add(MessageKey.JOIN_RACE_GAME_MODE, "commands.join_race.error_game_mode")
-      .add(MessageKey.RACE_SKIP_WAIT_NOT_STARTED, "commands.race_skip_wait.error_not_started")
-      .add(MessageKey.RELOAD_SUCCESS, "commands.reload.success")
-      .add(MessageKey.RELOAD_FAILED, "commands.reload.failed")
-      .add(MessageKey.RELOAD_MESSAGES_FAILED, "commands.reload.failed_messages")
-      .add(MessageKey.RELOAD_NOT_RACES, "commands.reload.not_races")
-      .add(MessageKey.RELOAD_RACES_FAILED, "commands.reload.races_failed")
-      .add(MessageKey.RELOAD_NOT_LANGUAGE, "commands.reload.not_language")
-      .add(MessageKey.RACE_SET_STATE_SUCCESS, "commands.race_set_state.success")
-      .add(MessageKey.RACE_SET_STATE_NOCHANGE, "commands.race_set_state.error_nochange")
-      .add(MessageKey.RACE_SET_STATE_ONGOING, "commands.race_set_state.error_ongoing")
-      .add(MessageKey.RACE_HELP_TITLE, "commands.race_help.title")
-      .add(MessageKey.RACE_HELP_ITEM, "commands.race_help.item")
-      .add(MessageKey.RACE_SET_ENTRYFEE, "commands.race_set_entryfee.success")
-      .add(MessageKey.RACE_SET_WALKSPEED, "commands.race_set_walkspeed.success")
-      .add(MessageKey.RACE_SET_PIG_SPEED, "commands.race_set_pig_speed.success")
-      .add(MessageKey.RACE_SET_HORSE_SPEED, "commands.race_set_horse_speed.success")
-      .add(MessageKey.RACE_SET_HORSE_JUMP_STRENGTH, "commands.race_set_horse_jump_strength.success")
-      .add(MessageKey.RACE_ADD_POTION_EFFECT, "commands.race_add_potion_effect.success")
-      .add(MessageKey.RACE_REMOVE_POTION_EFFECT, "commands.race_remove_potion_effect.success")
-      .add(MessageKey.RACE_CLEAR_POTION_EFFECTS, "commands.race_clear_potion_effects.success")
-      .add(MessageKey.RACE_LEAVE_NOT_PARTICIPATING, "commands.race_leave.error_not_participating")
-      .add(MessageKey.RACE_LEAVE_SUCCESS, "commands.race_leave.success")
-      .add(MessageKey.RACE_LEAVE_BROADCAST, "commands.race_leave.leave_broadcast")
-      .add(MessageKey.RACE_LEAVE_PAYBACK, "commands.race_leave.leave_payback")
-      .add(MessageKey.RACE_INFO_SUCCESS, "commands.race_info.success")
-      .add(MessageKey.RACE_INFO_NO_POTION_EFFECTS, "commands.race_info.no_potion_effects")
-      .add(MessageKey.RACE_INFO_POTION_EFFECT, "commands.race_info.potion_effect_item")
-      .add(MessageKey.RACE_INFO_ENTRY_FEE_LINE, "commands.race_info.entry_fee_line")
-      .add(MessageKey.RACE_TOP_TYPE_FASTEST, "commands.race_top.types.fastest")
-      .add(MessageKey.RACE_TOP_TYPE_FASTEST_LAP, "commands.race_top.types.fastest_lap")
-      .add(MessageKey.RACE_TOP_TYPE_MOST_RUNS, "commands.race_top.types.most_runs")
-      .add(MessageKey.RACE_TOP_TYPE_MOST_WINS, "commands.race_top.types.most_wins")
-      .add(MessageKey.RACE_TOP_TYPE_WIN_RATIO, "commands.race_top.types.win_ratio")
-      .add(MessageKey.RACE_TOP_HEADER, "commands.race_top.header")
-      .add(MessageKey.RACE_TOP_ITEM, "commands.race_top.item")
-      .add(MessageKey.RACE_TOP_ITEM_NONE, "commands.race_top.item_none")
-      .add(MessageKey.RACE_RESET_TOP, "commands.race_reset_top.success")
-      .add(MessageKey.RACE_NOT_FOUND, "validators.race_not_found")
-      .add(MessageKey.RACE_ALREADY_EXIST, "validators.race_already_exist")
-      .add(MessageKey.CHECKPOINT_NOT_FOUND, "validators.checkpoint_not_found")
-      .add(MessageKey.CHECKPOINT_ALREADY_EXIST, "validators.checkpoint_already_exist")
-      .add(MessageKey.STARTPOINT_NOT_FOUND, "validators.startpoint_not_found")
-      .add(MessageKey.STARTPOINT_ALREADY_EXIST, "validators.startpoint_already_exist")
-      .add(MessageKey.TYPE_NOT_FOUND, "validators.type_not_found")
-      .add(MessageKey.START_ORDER_NOT_FOUND, "validators.start_order_not_found")
-      .add(MessageKey.STATE_NOT_FOUND, "validators.state_not_found")
-      .add(MessageKey.SONG_NOT_FOUND, "validators.song_not_found")
-      .add(MessageKey.VALIDATE_NON_INTEGER, "validators.validate_non_integer")
-      .add(MessageKey.VALIDATE_NON_NUMBER, "validators.validate_non_number")
-      .add(MessageKey.VALIDATE_MIN_EXCEED, "validators.min_exceed")
-      .add(MessageKey.VALIDATE_MAX_EXCEED, "validators.max_exceed")
-      .add(MessageKey.RACE_POTION_EFFECT_NOT_FOUND, "validators.race_potion_effect_not_found")
-      .add(MessageKey.POTION_EFFECT_NOT_FOUND, "validators.potion_effect_not_found")
-      .add(MessageKey.STAT_TYPE_NOT_FOUND, "validators.stat_type_not_found")
-      .add(MessageKey.RACE_CANCELED, "race_canceled")
-      .add(MessageKey.NOSHOW_DISQUALIFIED, "race_start_noshow_disqualified")
-      .add(MessageKey.GAME_MODE_DISQUALIFIED, "race_start_gamemode_disqualified")
-      .add(MessageKey.GAME_MODE_DISQUALIFIED_TARGET, "race_start_gamemode_disqualified_target")
-      .add(MessageKey.QUIT_DISQUALIFIED, "race_start_quit_disqualified")
-      .add(MessageKey.DEATH_DISQUALIFIED, "race_death_disqualified")
-      .add(MessageKey.DEATH_DISQUALIFIED_TARGET, "race_death_disqualified_target")
-      .add(MessageKey.EDIT_NO_EDIT_MODE, "edit_no_edit_mode")
-      .add(MessageKey.RACE_PARTICIPANT_RESULT, "race_participant_result")
-      .add(MessageKey.PARTICIPATE_CLICK_TEXT, "race_participate_click_text")
-      .add(MessageKey.PARTICIPATE_HOVER_TEXT, "race_participate_hover_text")
-      .add(MessageKey.PARTICIPATE_TEXT, "race_participate_text")
-      .add(MessageKey.PARTICIPATE_TEXT_FEE, "race_participate_text_fee")
-      .add(MessageKey.PARTICIPATE_DISCORD, "race_participate_discord")
-      .add(MessageKey.PARTICIPATE_DISCORD_FEE, "race_participate_discord_fee")
-      .add(MessageKey.PARTICIPATE_TEXT_TIMELEFT, "race_participate_text_timeleft")
-      .add(MessageKey.RACE_COUNTDOWN, "race_countdown_subtitle")
-      .add(MessageKey.RACE_NEXT_LAP, "race_next_lap_actionbar")
-      .add(MessageKey.RACE_FINAL_LAP, "race_final_lap_actionbar")
-      .add(MessageKey.RESPAWN_INTERACT_START, "race_type_respawn_start_info")
-      .add(MessageKey.RESPAWN_INTERACT_LAST, "race_type_respawn_last_info")
-      .add(MessageKey.SKIP_WAIT_HOVER_TEXT, "race_skipwait_hover_text")
-      .add(MessageKey.SKIP_WAIT_CLICK_TEXT, "race_skipwait_click_text")
-      .add(MessageKey.SKIP_WAIT, "race_skipwait")
-      .add(MessageKey.STOP_RACE_HOVER_TEXT, "race_stop_hover_text")
-      .add(MessageKey.STOP_RACE_CLICK_TEXT, "race_stop_click_text")
-      .add(MessageKey.STOP_RACE, "race_stop")
-      .add(MessageKey.SIGN_REGISTERED, "race_sign_registered")
-      .add(MessageKey.SIGN_UNREGISTERED, "race_sign_unregistered")
-      .add(MessageKey.RACE_SIGN_LINES, "race_sign_lines")
-      .add(MessageKey.RACE_SIGN_FASTEST_LINES, "race_sign_fastest_lines")
-      .add(MessageKey.RACE_SIGN_STATS_LINES, "race_sign_stats_lines")
-      .add(MessageKey.SIGN_NOT_STARTED, "race_sign_status_not_started")
-      .add(MessageKey.SIGN_LOBBY, "race_sign_status_lobby")
-      .add(MessageKey.SIGN_STARTED, "race_sign_status_in_game")
-      .add(MessageKey.BLOCKED_CMDS, "race_blocked_cmd")
-      .add(MessageKey.NO_PERMISSION_COMMAND, "no_permission_command")
-      .add(MessageKey.MISSING_ARGUMENTS_COMMAND, "missing_arguments_command")
-      .add(MessageKey.COMMAND_NOT_FOUND, "command_not_found")
-      .add(MessageKey.TIME_UNIT_SECOND, "timeunit.second")
-      .add(MessageKey.TIME_UNIT_SECONDS, "timeunit.seconds")
-      .add(MessageKey.TIME_UNIT_MINUTE, "timeunit.minute")
-      .add(MessageKey.TIME_UNIT_MINUTES, "timeunit.minutes")
-      .add(MessageKey.TIME_UNIT_HOUR, "timeunit.hour")
-      .add(MessageKey.TIME_UNIT_HOURS, "timeunit.hours")
-      .add(MessageKey.TIME_UNIT_DAY, "timeunit.day")
-      .add(MessageKey.TIME_UNIT_DAYS, "timeunit.days")
-      .add(MessageKey.TIME_UNIT_NOW, "timeunit.now")
-      .add(MessageKey.SCOREBOARD_HEADING_FORMAT, "scoreboard.heading_format")
-      .add(MessageKey.SCOREBOARD_TITLE_FORMAT, "scoreboard.title_format")
-      .add(MessageKey.SCOREBOARD_TEXT_FORMAT, "scoreboard.text_format")
-      .add(MessageKey.SCOREBOARD_WORLD_RECORD, "scoreboard.world_record")
-      .add(MessageKey.SCOREBOARD_WORLD_RECORD_FASTEST_LAP, "scoreboard.world_record_fastest_lap")
-      .add(MessageKey.SCOREBOARD_PERSONAL_RECORD, "scoreboard.personal_record")
-      .add(MessageKey.SCOREBOARD_TIME, "scoreboard.time")
-      .add(MessageKey.SCOREBOARD_FASTEST_LAP, "scoreboard.fastest_lap")
-      .add(MessageKey.SCOREBOARD_LAP_TAG, "scoreboard.lap_tag")
-      .add(MessageKey.SCOREBOARD_NO_TIME_STATS, "scoreboard.no_time_stats")
-      .add(MessageKey.SCOREBOARD_NO_NAME_STATS, "scoreboard.no_name_stats")
-      .add(MessageKey.LAP_SINGULAR, "lap.singular")
-      .add(MessageKey.LAP_PLURAL, "lap.plural")
-      .build();
+    MessagesBuilder m = new MessagesBuilder();
+    m.add(MessageKey.CREATE_RACE_SUCCESS, "commands.create_race.success");
+    m.add(MessageKey.CREATE_RACE_NAME_OCCUPIED, "commands.create_race.error_name_occupied");
+    m.add(MessageKey.DELETE_RACE_SUCCESS, "commands.delete_race.success");
+    m.add(MessageKey.CHANGE_RACE_NAME_SUCCESS, "commands.change_race_name.success");
+    m.add(MessageKey.RACE_ADD_CHECKPOINT_SUCCESS, "commands.race_add_checkpoint.success");
+    m.add(MessageKey.RACE_ADD_CHECKPOINT_IS_OCCUPIED, "commands.race_add_checkpoint.error_is_occupied");
+    m.add(MessageKey.RACE_DELETE_CHECKPOINT_SUCCESS, "commands.race_delete_checkpoint.success");
+    m.add(MessageKey.RACE_ADD_STARTPOINT_SUCCESS, "commands.race_add_startpoint.success");
+    m.add(MessageKey.RACE_ADD_STARTPOINT_IS_OCCUPIED, "commands.race_add_startpoint.error_is_occupied");
+    m.add(MessageKey.RACE_DELETE_STARTPOINT_SUCCESS, "commands.race_delete_startpoint.success");
+    m.add(MessageKey.RACE_SPAWN_NOT_ENABLED, "commands.race_spawn.error_not_enabled");
+    m.add(MessageKey.RACE_SET_SPAWN_SUCCESS, "commands.race_set_spawn.success");
+    m.add(MessageKey.LIST_RACES_LIST, "commands.list_races.race_list");
+    m.add(MessageKey.LIST_RACES_ITEM, "commands.list_races.race_list_item");
+    m.add(MessageKey.RACE_SET_TYPE_SUCCESS, "commands.race_set_type.success");
+    m.add(MessageKey.RACE_SET_TYPE_NOCHANGE, "commands.race_set_type.error_nochange");
+    m.add(MessageKey.RACE_SET_START_ORDER_SUCCESS, "commands.race_set_start_order.success");
+    m.add(MessageKey.RACE_SET_START_ORDER_NOCHANGE, "commands.race_set_start_order.error_nochange");
+    m.add(MessageKey.RACE_SET_SONG_SUCCESS, "commands.race_set_song.success");
+    m.add(MessageKey.RACE_SET_SONG_NOCHANGE, "commands.race_set_song.error_nochange");
+    m.add(MessageKey.RACE_UNSET_SONG_SUCCESS, "commands.race_unset_song.success");
+    m.add(MessageKey.RACE_UNSET_SONG_ALREADY_UNSET, "commands.race_unset_song.error_already_unset");
+    m.add(MessageKey.START_RACE_ALREADY_STARTED, "commands.start_race.error_already_started");
+    m.add(MessageKey.START_RACE_MISSING_STARTPOINT, "commands.start_race.error_missing_startpoint");
+    m.add(MessageKey.START_RACE_MISSING_CHECKPOINT, "commands.start_race.error_missing_checkpoint");
+    m.add(MessageKey.START_RACE_MISSING_CHECKPOINTS, "commands.start_race.error_missing_checkpoints");
+    m.add(MessageKey.START_RACE_NOT_ENABLED, "commands.start_race.error_not_enabled");
+    m.add(MessageKey.START_RACE_NO_ENABLED, "commands.start_race.error_no_enabled");
+    m.add(MessageKey.STOP_RACE_SUCCESS, "commands.stop_race.success");
+    m.add(MessageKey.STOP_RACE_NOT_STARTED, "commands.stop_race.error_not_started");
+    m.add(MessageKey.JOIN_RACE_SUCCESS, "commands.join_race.success");
+    m.add(MessageKey.JOIN_RACE_CHARGED, "commands.join_race.charged");
+    m.add(MessageKey.JOIN_RACE_NOT_OPEN, "commands.join_race.error_not_open");
+    m.add(MessageKey.JOIN_RACE_IS_FULL, "commands.join_race.error_is_full");
+    m.add(MessageKey.JOIN_RACE_IS_PARTICIPATING, "commands.join_race.error_is_participating");
+    m.add(MessageKey.JOIN_RACE_IS_PARTICIPATING_OTHER, "commands.join_race.error_is_participating_other");
+    m.add(MessageKey.JOIN_RACE_NOT_AFFORD, "commands.join_race.error_not_afford");
+    m.add(MessageKey.JOIN_RACE_GAME_MODE, "commands.join_race.error_game_mode");
+    m.add(MessageKey.RACE_SKIP_WAIT_NOT_STARTED, "commands.race_skip_wait.error_not_started");
+    m.add(MessageKey.RELOAD_SUCCESS, "commands.reload.success");
+    m.add(MessageKey.RELOAD_FAILED, "commands.reload.failed");
+    m.add(MessageKey.RELOAD_MESSAGES_FAILED, "commands.reload.failed_messages");
+    m.add(MessageKey.RELOAD_NOT_RACES, "commands.reload.not_races");
+    m.add(MessageKey.RELOAD_RACES_FAILED, "commands.reload.races_failed");
+    m.add(MessageKey.RELOAD_NOT_LANGUAGE, "commands.reload.not_language");
+    m.add(MessageKey.RACE_SET_STATE_SUCCESS, "commands.race_set_state.success");
+    m.add(MessageKey.RACE_SET_STATE_NOCHANGE, "commands.race_set_state.error_nochange");
+    m.add(MessageKey.RACE_SET_STATE_ONGOING, "commands.race_set_state.error_ongoing");
+    m.add(MessageKey.RACE_HELP_TITLE, "commands.race_help.title");
+    m.add(MessageKey.RACE_HELP_ITEM, "commands.race_help.item");
+    m.add(MessageKey.RACE_SET_ENTRYFEE, "commands.race_set_entryfee.success");
+    m.add(MessageKey.RACE_SET_WALKSPEED, "commands.race_set_walkspeed.success");
+    m.add(MessageKey.RACE_SET_PIG_SPEED, "commands.race_set_pig_speed.success");
+    m.add(MessageKey.RACE_SET_HORSE_SPEED, "commands.race_set_horse_speed.success");
+    m.add(MessageKey.RACE_SET_HORSE_JUMP_STRENGTH, "commands.race_set_horse_jump_strength.success");
+    m.add(MessageKey.RACE_ADD_POTION_EFFECT, "commands.race_add_potion_effect.success");
+    m.add(MessageKey.RACE_REMOVE_POTION_EFFECT, "commands.race_remove_potion_effect.success");
+    m.add(MessageKey.RACE_CLEAR_POTION_EFFECTS, "commands.race_clear_potion_effects.success");
+    m.add(MessageKey.RACE_LEAVE_NOT_PARTICIPATING, "commands.race_leave.error_not_participating");
+    m.add(MessageKey.RACE_LEAVE_SUCCESS, "commands.race_leave.success");
+    m.add(MessageKey.RACE_LEAVE_BROADCAST, "commands.race_leave.leave_broadcast");
+    m.add(MessageKey.RACE_LEAVE_PAYBACK, "commands.race_leave.leave_payback");
+    m.add(MessageKey.RACE_INFO_SUCCESS, "commands.race_info.success");
+    m.add(MessageKey.RACE_INFO_NO_POTION_EFFECTS, "commands.race_info.no_potion_effects");
+    m.add(MessageKey.RACE_INFO_POTION_EFFECT, "commands.race_info.potion_effect_item");
+    m.add(MessageKey.RACE_INFO_ENTRY_FEE_LINE, "commands.race_info.entry_fee_line");
+    m.add(MessageKey.RACE_TOP_TYPE_FASTEST, "commands.race_top.types.fastest");
+    m.add(MessageKey.RACE_TOP_TYPE_FASTEST_LAP, "commands.race_top.types.fastest_lap");
+    m.add(MessageKey.RACE_TOP_TYPE_MOST_RUNS, "commands.race_top.types.most_runs");
+    m.add(MessageKey.RACE_TOP_TYPE_MOST_WINS, "commands.race_top.types.most_wins");
+    m.add(MessageKey.RACE_TOP_TYPE_WIN_RATIO, "commands.race_top.types.win_ratio");
+    m.add(MessageKey.RACE_TOP_HEADER, "commands.race_top.header");
+    m.add(MessageKey.RACE_TOP_ITEM, "commands.race_top.item");
+    m.add(MessageKey.RACE_TOP_ITEM_NONE, "commands.race_top.item_none");
+    m.add(MessageKey.RACE_RESET_TOP, "commands.race_reset_top.success");
+    m.add(MessageKey.HD_TOP_LIST_CREATE_SUCCESS, "commands.hd_top_list_create.success");
+    m.add(MessageKey.HD_TOP_LIST_CREATE_ERROR_NO_PERSIST, "commands.hd_top_list_create.error_no_persist");
+    m.add(MessageKey.HD_TOP_LIST_CREATE_ALREADY_EXIST, "commands.hd_top_list_create.already_exist");
+    m.add(MessageKey.HD_TOP_LIST_DELETE_SUCCESS, "commands.hd_top_list_delete.success");
+    m.add(MessageKey.HD_TOP_LIST_DELETE_ERROR_FAIL_DELETE_FILE, "commands.hd_top_list_delete.error_fail_delete_file");
+    m.add(MessageKey.HD_TOP_LIST_MOVE, "commands.hd_top_list_move.success");
+    m.add(MessageKey.HD_TOP_LIST_SET_RACE, "commands.hd_top_list_set_race.success");
+    m.add(MessageKey.HD_TOP_LIST_SET_STAT, "commands.hd_top_list_set_stat.success");
+    m.add(MessageKey.HD_TOP_LIST_SET_LAPS, "commands.hd_top_list_set_laps.success");
+    m.add(MessageKey.HD_TOP_LIST_LIST_HEADER, "commands.hd_top_list_list.header");
+    m.add(MessageKey.HD_TOP_LIST_LIST_ITEM, "commands.hd_top_list_list.item");
+    m.add(MessageKey.HD_TOP_LIST_LIST_ITEM_INFO, "commands.hd_top_list_list.item_info");
+    m.add(MessageKey.HD_TOP_LIST_LIST_TELEPORT_CLICK, "commands.hd_top_list_list.teleport_click");
+    m.add(MessageKey.HD_TOP_LIST_LIST_TELEPORT_HOVER, "commands.hd_top_list_list.teleport_hover");
+    m.add(MessageKey.RACE_NOT_FOUND, "validators.race_not_found");
+    m.add(MessageKey.RACE_ALREADY_EXIST, "validators.race_already_exist");
+    m.add(MessageKey.CHECKPOINT_NOT_FOUND, "validators.checkpoint_not_found");
+    m.add(MessageKey.CHECKPOINT_ALREADY_EXIST, "validators.checkpoint_already_exist");
+    m.add(MessageKey.STARTPOINT_NOT_FOUND, "validators.startpoint_not_found");
+    m.add(MessageKey.STARTPOINT_ALREADY_EXIST, "validators.startpoint_already_exist");
+    m.add(MessageKey.TYPE_NOT_FOUND, "validators.type_not_found");
+    m.add(MessageKey.START_ORDER_NOT_FOUND, "validators.start_order_not_found");
+    m.add(MessageKey.STATE_NOT_FOUND, "validators.state_not_found");
+    m.add(MessageKey.SONG_NOT_FOUND, "validators.song_not_found");
+    m.add(MessageKey.VALIDATE_NON_INTEGER, "validators.validate_non_integer");
+    m.add(MessageKey.VALIDATE_NON_NUMBER, "validators.validate_non_number");
+    m.add(MessageKey.VALIDATE_MIN_EXCEED, "validators.min_exceed");
+    m.add(MessageKey.VALIDATE_MAX_EXCEED, "validators.max_exceed");
+    m.add(MessageKey.RACE_POTION_EFFECT_NOT_FOUND, "validators.race_potion_effect_not_found");
+    m.add(MessageKey.POTION_EFFECT_NOT_FOUND, "validators.potion_effect_not_found");
+    m.add(MessageKey.STAT_TYPE_NOT_FOUND, "validators.stat_type_not_found");
+    m.add(MessageKey.HD_TOP_LIST_NOT_FOUND, "validators.hd_top_list_not_found");
+    m.add(MessageKey.RACE_CANCELED, "race_canceled");
+    m.add(MessageKey.NOSHOW_DISQUALIFIED, "race_start_noshow_disqualified");
+    m.add(MessageKey.GAME_MODE_DISQUALIFIED, "race_start_gamemode_disqualified");
+    m.add(MessageKey.GAME_MODE_DISQUALIFIED_TARGET, "race_start_gamemode_disqualified_target");
+    m.add(MessageKey.QUIT_DISQUALIFIED, "race_start_quit_disqualified");
+    m.add(MessageKey.DEATH_DISQUALIFIED, "race_death_disqualified");
+    m.add(MessageKey.DEATH_DISQUALIFIED_TARGET, "race_death_disqualified_target");
+    m.add(MessageKey.EDIT_NO_EDIT_MODE, "edit_no_edit_mode");
+    m.add(MessageKey.RACE_PARTICIPANT_RESULT, "race_participant_result");
+    m.add(MessageKey.PARTICIPATE_CLICK_TEXT, "race_participate_click_text");
+    m.add(MessageKey.PARTICIPATE_HOVER_TEXT, "race_participate_hover_text");
+    m.add(MessageKey.PARTICIPATE_TEXT, "race_participate_text");
+    m.add(MessageKey.PARTICIPATE_TEXT_FEE, "race_participate_text_fee");
+    m.add(MessageKey.PARTICIPATE_DISCORD, "race_participate_discord");
+    m.add(MessageKey.PARTICIPATE_DISCORD_FEE, "race_participate_discord_fee");
+    m.add(MessageKey.PARTICIPATE_TEXT_TIMELEFT, "race_participate_text_timeleft");
+    m.add(MessageKey.RACE_COUNTDOWN, "race_countdown_subtitle");
+    m.add(MessageKey.RACE_NEXT_LAP, "race_next_lap_actionbar");
+    m.add(MessageKey.RACE_FINAL_LAP, "race_final_lap_actionbar");
+    m.add(MessageKey.RESPAWN_INTERACT_START, "race_type_respawn_start_info");
+    m.add(MessageKey.RESPAWN_INTERACT_LAST, "race_type_respawn_last_info");
+    m.add(MessageKey.SKIP_WAIT_HOVER_TEXT, "race_skipwait_hover_text");
+    m.add(MessageKey.SKIP_WAIT_CLICK_TEXT, "race_skipwait_click_text");
+    m.add(MessageKey.SKIP_WAIT, "race_skipwait");
+    m.add(MessageKey.STOP_RACE_HOVER_TEXT, "race_stop_hover_text");
+    m.add(MessageKey.STOP_RACE_CLICK_TEXT, "race_stop_click_text");
+    m.add(MessageKey.STOP_RACE, "race_stop");
+    m.add(MessageKey.SIGN_REGISTERED, "race_sign_registered");
+    m.add(MessageKey.SIGN_UNREGISTERED, "race_sign_unregistered");
+    m.add(MessageKey.RACE_SIGN_LINES, "race_sign_lines");
+    m.add(MessageKey.RACE_SIGN_FASTEST_LINES, "race_sign_fastest_lines");
+    m.add(MessageKey.RACE_SIGN_STATS_LINES, "race_sign_stats_lines");
+    m.add(MessageKey.SIGN_NOT_STARTED, "race_sign_status_not_started");
+    m.add(MessageKey.SIGN_LOBBY, "race_sign_status_lobby");
+    m.add(MessageKey.SIGN_STARTED, "race_sign_status_in_game");
+    m.add(MessageKey.BLOCKED_CMDS, "race_blocked_cmd");
+    m.add(MessageKey.NO_PERMISSION_COMMAND, "no_permission_command");
+    m.add(MessageKey.MISSING_ARGUMENTS_COMMAND, "missing_arguments_command");
+    m.add(MessageKey.COMMAND_NOT_FOUND, "command_not_found");
+    m.add(MessageKey.TIME_UNIT_SECOND, "timeunit.second");
+    m.add(MessageKey.TIME_UNIT_SECONDS, "timeunit.seconds");
+    m.add(MessageKey.TIME_UNIT_MINUTE, "timeunit.minute");
+    m.add(MessageKey.TIME_UNIT_MINUTES, "timeunit.minutes");
+    m.add(MessageKey.TIME_UNIT_HOUR, "timeunit.hour");
+    m.add(MessageKey.TIME_UNIT_HOURS, "timeunit.hours");
+    m.add(MessageKey.TIME_UNIT_DAY, "timeunit.day");
+    m.add(MessageKey.TIME_UNIT_DAYS, "timeunit.days");
+    m.add(MessageKey.TIME_UNIT_NOW, "timeunit.now");
+    m.add(MessageKey.SCOREBOARD_HEADING_FORMAT, "scoreboard.heading_format");
+    m.add(MessageKey.SCOREBOARD_TITLE_FORMAT, "scoreboard.title_format");
+    m.add(MessageKey.SCOREBOARD_TEXT_FORMAT, "scoreboard.text_format");
+    m.add(MessageKey.SCOREBOARD_WORLD_RECORD, "scoreboard.world_record");
+    m.add(MessageKey.SCOREBOARD_WORLD_RECORD_FASTEST_LAP, "scoreboard.world_record_fastest_lap");
+    m.add(MessageKey.SCOREBOARD_PERSONAL_RECORD, "scoreboard.personal_record");
+    m.add(MessageKey.SCOREBOARD_TIME, "scoreboard.time");
+    m.add(MessageKey.SCOREBOARD_FASTEST_LAP, "scoreboard.fastest_lap");
+    m.add(MessageKey.SCOREBOARD_LAP_TAG, "scoreboard.lap_tag");
+    m.add(MessageKey.SCOREBOARD_NO_TIME_STATS, "scoreboard.no_time_stats");
+    m.add(MessageKey.SCOREBOARD_NO_NAME_STATS, "scoreboard.no_name_stats");
+    m.add(MessageKey.LAP_SINGULAR, "lap.singular");
+    m.add(MessageKey.LAP_PLURAL, "lap.plural");
+    m.add(MessageKey.HD_TOP_LIST_HEADER, "hd_top_list.header");
+    m.add(MessageKey.HD_TOP_LIST_ITEM, "hd_top_list.item");
+    m.add(MessageKey.HD_TOP_LIST_NONE, "hd_top_list.none");
+    m.add(MessageKey.HD_TOP_LIST_FOOTER, "hd_top_list.footer");
+    MessageManager messageManager = m.build();
 
     translations = new Translations(this, messageManager);
     String language = configuration.get(ConfigKey.LANGUAGE);
@@ -359,7 +450,7 @@ public class RacingPlugin extends JavaPlugin {
   }
 
   private void setupNoteBlockAPI() {
-    if(isNoteBlockAPILoaded) {
+    if(noteBlockAPILoaded) {
       SongManager.init(this);
       getServer().getPluginManager().registerEvents(SongManager.getInstance(), this);
     }
@@ -676,7 +767,7 @@ public class RacingPlugin extends JavaPlugin {
       .requiresPermission(Permission.RACING_MODIFY.toString())
       .preventConsoleCommandSender();
 
-    if(isNoteBlockAPILoaded) {
+    if(noteBlockAPILoaded) {
       ICarbonArgument songArgument =
         new CarbonArgument.Builder("song")
           .setHandler(new SongArgumentHandler())
@@ -801,22 +892,96 @@ public class RacingPlugin extends JavaPlugin {
       .withHandler(new CommandResetTop(racingManager))
       .requiresPermission(Permission.COMMAND_RESET_TOP.toString())
       .requiresPermission(Permission.RACING_ADMIN.toString());
+
+    if(holographicDisplaysLoaded) {
+      ICarbonArgument topListName = new CarbonArgument.Builder("name")
+        .setHandler(new TopListArgumentHandler(false))
+        .create();
+
+      commando
+        .addCommand("racing hdtoplist create")
+        .withHandler(new CommandCreateHDTopList())
+        .withArgument(topListName)
+        .withArgument(raceArgument)
+        .withArgument(statArgument)
+        .withArgument(lapsArgument)
+        .requiresPermission(Permission.COMMAND_CREATE_HD_TOP_LIST.toString())
+        .requiresPermission(Permission.RACING_MODIFY.toString())
+        .preventConsoleCommandSender();
+
+      ICarbonArgument topListArg = new CarbonArgument.Builder("toplist")
+        .setHandler(new TopListArgumentHandler(true))
+        .create();
+
+      commando
+        .addCommand("racing hdtoplist delete")
+        .withHandler(new CommandDeleteHDTopList())
+        .withArgument(topListArg)
+        .requiresPermission(Permission.COMMAND_DELETE_HD_TOP_LIST.toString())
+        .requiresPermission(Permission.RACING_MODIFY.toString());
+
+      commando
+        .addCommand("racing hdtoplist move")
+        .withHandler(new CommandMoveHDTopList())
+        .withArgument(topListArg)
+        .requiresPermission(Permission.COMMAND_MOVE_HD_TOP_LIST.toString())
+        .requiresPermission(Permission.RACING_MODIFY.toString())
+        .preventConsoleCommandSender();
+
+      commando
+        .addCommand("racing hdtoplist setrace")
+        .withHandler(new CommandSetRaceHDTopList())
+        .withArgument(topListArg)
+        .withArgument(raceArgument)
+        .requiresPermission(Permission.COMMAND_SET_RACE_HD_TOP_LIST.toString())
+        .requiresPermission(Permission.RACING_MODIFY.toString());
+
+      commando
+        .addCommand("racing hdtoplist setstat")
+        .withHandler(new CommandSetStatHDTopList())
+        .withArgument(topListArg)
+        .withArgument(statArgument)
+        .requiresPermission(Permission.COMMAND_SET_STAT_HD_TOP_LIST.toString())
+        .requiresPermission(Permission.RACING_MODIFY.toString());
+
+      commando
+        .addCommand("racing hdtoplist setlaps")
+        .withHandler(new CommandSetLapsHDTopList())
+        .withArgument(topListArg)
+        .withArgument(lapsArgument)
+        .requiresPermission(Permission.COMMAND_SET_LAPS_HD_TOP_LIST.toString())
+        .requiresPermission(Permission.RACING_MODIFY.toString());
+
+      commando
+        .addCommand("racing hdtoplist list")
+        .withHandler(new CommandListHDTopList())
+        .requiresPermission(Permission.COMMAND_LIST_HD_TOP_LIST.toString())
+        .requiresPermission(Permission.RACING_MODERATOR.toString());
+
+      commando
+        .addCommand("racing hdtoplist teleport")
+        .withHandler(new CommandTeleportHDTopList())
+        .withArgument(topListArg)
+        .requiresPermission(Permission.COMMAND_TELEPORT_HD_TOP_LIST.toString())
+        .requiresPermission(Permission.RACING_MODERATOR.toString())
+        .preventConsoleCommandSender();
+    }
   }
 
   private void setupObjects() {
-    RaceCommandExecutor raceCommandExecutor = new RaceCommandExecutor();
+    Listener raceCommandExecutor = new RaceCommandExecutor();
     getServer().getPluginManager().registerEvents(raceCommandExecutor, this);
 
     racingManager = new RacingManager();
     getServer().getPluginManager().registerEvents(racingManager, this);
 
-    SignManager signManager = new SignManager(racingManager);
+    Listener signManager = new SignManager(racingManager);
     getServer().getPluginManager().registerEvents(signManager, this);
 
-    DiscordManager discordManager = new DiscordManager();
+    Listener discordManager = new DiscordManager();
     getServer().getPluginManager().registerEvents(discordManager, this);
 
-    String storageTypeString = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.STORAGE);
+    String storageTypeString = RacingPlugin.getInstance().configuration.get(ConfigKey.STORAGE);
     StorageType storageType = StorageType.valueOf(storageTypeString.toUpperCase(Locale.ENGLISH));
     switch (storageType) {
       case FILE:
@@ -828,6 +993,11 @@ public class RacingPlugin extends JavaPlugin {
     }
     racingManager.load();
     initMcMMO();
+
+    if(holographicDisplaysLoaded) {
+      Listener listener = new HDTopListManager();
+      getServer().getPluginManager().registerEvents(listener, this);
+    }
   }
 
   private void initMcMMO() {
@@ -841,7 +1011,7 @@ public class RacingPlugin extends JavaPlugin {
   }
 
   public static void debug(String message, Object... args) {
-    if(RacingPlugin.getInstance().getConfiguration().<Boolean>get(ConfigKey.VERBOSE)) {
+    if(RacingPlugin.getInstance().configuration.<Boolean>get(ConfigKey.VERBOSE)) {
       try {
         RacingPlugin.getInstance().getLogger().info(String.format(message, args));
       } catch (IllegalFormatConversionException e) {

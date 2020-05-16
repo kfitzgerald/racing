@@ -264,9 +264,8 @@ public class RaceSession implements Listener {
         worldRecordHolder = playerStatistics.getPlayerName();
       }
     }
-    Set<RacePlayerStatistic> fastestLaps = race.getResults(RaceStatType.FASTEST_LAP);
-    if(!fastestLaps.isEmpty())
-    {
+    Set<RacePlayerStatistic> fastestLaps = race.getResults(RaceStatType.FASTEST_LAP, laps);
+    if(!fastestLaps.isEmpty()) {
       RacePlayerStatistic statistic = fastestLaps.iterator().next();
       worldRecordFastestLap = statistic.getFastestLap();
       worldRecordFastestLapHolder = statistic.getPlayerName();
@@ -287,9 +286,9 @@ public class RaceSession implements Listener {
       {
         RacePlayerStatistic statistics = race.getResultByPlayerId().get(session.getPlayerId());
         scoreboardManager.updatePersonalBestLapTime(session.getPlayer(), statistics.getFastestLap());
-        if(statistics.getRecord(this.laps) != Long.MAX_VALUE)
+        if(statistics.getRecord(laps) != Long.MAX_VALUE)
         {
-          scoreboardManager.updatePersonalBest(session.getPlayer(), statistics.getRecord(this.laps));
+          scoreboardManager.updatePersonalBest(session.getPlayer(), statistics.getRecord(laps));
         }
       }
     }

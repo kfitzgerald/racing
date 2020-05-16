@@ -52,6 +52,6 @@ public enum RaceVersion {
   }
 
   public boolean isGreater(RaceVersion v) {
-    return order > v.getOrder();
+    return order > v.order;
   }
 }

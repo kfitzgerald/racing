@@ -5,12 +5,13 @@ import com.github.hornta.racing.objects.RacePlayerSession;
 import com.github.hornta.racing.objects.RaceSession;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.NotNull;
 
 public class CheckpointReachedEvent extends Event {
   private static final HandlerList handlers = new HandlerList();
-  private RaceSession raceSession;
-  private RacePlayerSession playerSession;
-  private RaceCheckpoint checkpoint;
+  private final RaceSession raceSession;
+  private final RacePlayerSession playerSession;
+  private final RaceCheckpoint checkpoint;
 
   public CheckpointReachedEvent(
     RaceSession raceSession,
@@ -39,7 +40,7 @@ public class CheckpointReachedEvent extends Event {
   }
 
   @Override
-  public HandlerList getHandlers() {
+  public @NotNull HandlerList getHandlers() {
     return handlers;
   }
 }

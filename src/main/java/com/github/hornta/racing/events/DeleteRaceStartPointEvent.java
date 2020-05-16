@@ -3,6 +3,7 @@ package com.github.hornta.racing.events;
 import com.github.hornta.racing.objects.Race;
 import com.github.hornta.racing.objects.RaceStartPoint;
 import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.NotNull;
 
 public class DeleteRaceStartPointEvent extends RaceStartPointEvent {
   private static final HandlerList handlers = new HandlerList();
@@ -16,7 +17,7 @@ public class DeleteRaceStartPointEvent extends RaceStartPointEvent {
   }
 
   @Override
-  public HandlerList getHandlers() {
+  public @NotNull HandlerList getHandlers() {
     return handlers;
   }
 }

@@ -177,12 +177,14 @@ public class Race implements Listener {
     }
   }
 
-  public Set<RacePlayerStatistic> getResults(RaceStatType type) {
+  public Set<RacePlayerStatistic> getResults(RaceStatType type, int laps) {
+    if(type == RaceStatType.FASTEST) {
+      return getResultsForLapCount(laps);
+    }
     return resultsByStat.get(type);
   }
 
   public Set<RacePlayerStatistic> getResultsForLapCount(int laps) {
-
       Set<RacePlayerStatistic> stats = new TreeSet<>((RacePlayerStatistic o1, RacePlayerStatistic o2) -> {
         int order = (int)(o1.getRecord(laps) - o2.getRecord(laps));
         if(order == 0) {
@@ -191,10 +193,8 @@ public class Race implements Listener {
           return order;
         }
       });
-      stats.addAll(getResults(RaceStatType.FASTEST_LAP));
-      stats.removeIf(entry -> {
-        return entry.getRecord(laps) == Long.MAX_VALUE;
-      });
+      stats.addAll(getResults(RaceStatType.FASTEST_LAP, 0));
+      stats.removeIf(entry -> entry.getRecord(laps) == Long.MAX_VALUE);
       return stats;   
   }
 

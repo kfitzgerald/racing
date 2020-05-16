@@ -1,15 +1,14 @@
 package com.github.hornta.racing.events;
 
 import com.github.hornta.racing.objects.Race;
-import com.github.hornta.racing.objects.RaceCheckpoint;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
-public class DeleteRaceCheckpointEvent extends RaceCheckpointEvent {
+public class RaceResultUpdatedEvent extends RaceEvent {
   private static final HandlerList handlers = new HandlerList();
 
-  public DeleteRaceCheckpointEvent(Race race, RaceCheckpoint checkpoint) {
-    super(race, checkpoint);
+  public RaceResultUpdatedEvent(Race race) {
+    super(race);
   }
 
   public static HandlerList getHandlerList() {
@@ -21,4 +20,3 @@ public class DeleteRaceCheckpointEvent extends RaceCheckpointEvent {
     return handlers;
   }
 }
-

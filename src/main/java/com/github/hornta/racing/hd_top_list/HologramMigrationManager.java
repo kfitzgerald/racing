@@ -1,16 +1,16 @@
-package com.github.hornta.racing.api;
+package com.github.hornta.racing.hd_top_list;
 
 import com.github.hornta.racing.RacingPlugin;
-import com.github.hornta.racing.enums.RaceVersion;
+import com.github.hornta.racing.api.ParseRaceException;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
-public class MigrationManager {
-  private List<IFileMigration> migrations = new ArrayList<>();
+public class HologramMigrationManager {
+  private final Collection<IHologramFileMigration> migrations = new ArrayList<>();
 
-  public void addMigration(IFileMigration migration) {
+  public void addMigration(IHologramFileMigration migration) {
 
     if(migration.from().equals(migration.to())) {
       throw new IllegalArgumentException("Migration from() and to() must return different values");
@@ -20,11 +20,11 @@ public class MigrationManager {
       throw new IllegalArgumentException("Migration from() must not be greater than to()");
     }
 
-    for(int i = 0; i < migrations.size(); ++i) {
-      if(migrations.get(i).from().equals(migration.from())) {
+    for (IHologramFileMigration iFileMigration : migrations) {
+      if (iFileMigration.from().equals(migration.from())) {
         throw new IllegalArgumentException("There is already a migration with the same from()");
       }
-      if(migrations.get(i).to().equals(migration.to())) {
+      if (iFileMigration.to().equals(migration.to())) {
         throw new IllegalArgumentException("There is already a migration with the same to()");
       }
     }
@@ -33,30 +33,30 @@ public class MigrationManager {
   }
 
   public void migrate(YamlConfiguration yaml) {
-    RaceVersion version;
+    HDTopListVersion version;
 
     try {
-      version = RaceVersion.fromString(yaml.getString("version"));
+      version = HDTopListVersion.fromString(yaml.getString("version"));
     } catch (IllegalArgumentException e) {
       throw new ParseRaceException("Couldn't find version");
     }
 
-    RaceVersion currentVersion = RaceVersion.getLast();
+    HDTopListVersion currentVersion = HDTopListVersion.getLast();
 
     if(version.isGreater(currentVersion)) {
-      throw new ParseRaceException("Race version greater than plugin race version not supported.");
+      throw new ParseRaceException("Hologram top list version greater than plugin hologram top list version not supported.");
     }
 
     if(version == currentVersion) {
       return;
     }
 
-    for(IFileMigration migration : migrations) {
-      RaceVersion fromVersion = RaceVersion.fromString(yaml.getString("version"));
+    for(IHologramFileMigration migration : migrations) {
+      HDTopListVersion fromVersion = HDTopListVersion.fromString(yaml.getString("version"));
       if(migration.from().equals(fromVersion)) {
         migration.migrate(yaml);
         yaml.set("version", migration.to().toString());
-        RacingPlugin.logger().info("Migrate race from version " + fromVersion.toString() + " to " + migration.to().toString());
+        RacingPlugin.logger().info("Migrate hologram top list from version " + fromVersion.toString() + " to " + migration.to().toString());
       }
     }
   }
