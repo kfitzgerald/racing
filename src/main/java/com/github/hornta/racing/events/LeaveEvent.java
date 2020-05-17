@@ -4,11 +4,12 @@ import com.github.hornta.racing.objects.RacePlayerSession;
 import com.github.hornta.racing.objects.RaceSession;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.NotNull;
 
 public class LeaveEvent extends Event {
   private static final HandlerList handlers = new HandlerList();
-  private RaceSession raceSession;
-  private RacePlayerSession playerSession;
+  private final RaceSession raceSession;
+  private final RacePlayerSession playerSession;
 
   public LeaveEvent(RaceSession raceSession, RacePlayerSession playerSession) {
     this.raceSession = raceSession;
@@ -28,7 +29,7 @@ public class LeaveEvent extends Event {
   }
 
   @Override
-  public HandlerList getHandlers() {
+  public @NotNull HandlerList getHandlers() {
     return handlers;
   }
 }

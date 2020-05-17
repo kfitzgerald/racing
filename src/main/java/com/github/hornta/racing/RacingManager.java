@@ -19,9 +19,11 @@ import com.github.hornta.racing.events.ExecuteCommandEvent;
 import com.github.hornta.racing.events.RaceChangeNameEvent;
 import com.github.hornta.racing.events.RaceChangeStateEvent;
 import com.github.hornta.racing.events.RacePlayerGoalEvent;
+import com.github.hornta.racing.events.RaceResultUpdatedEvent;
 import com.github.hornta.racing.events.RaceSessionResultEvent;
 import com.github.hornta.racing.events.RaceSessionStartEvent;
 import com.github.hornta.racing.events.RaceSessionStopEvent;
+import com.github.hornta.racing.events.RacesLoadedEvent;
 import com.github.hornta.racing.events.SessionStateChangedEvent;
 import com.github.hornta.racing.features.AllowTeleport;
 import com.github.hornta.racing.features.DamageParticipants;
@@ -51,12 +53,19 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.PluginManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class RacingManager implements Listener {
   private final Map<String, Race> racesByName = new HashMap<>();
+  private final Map<UUID, Race> racesById = new HashMap<>();
   private final List<Race> races = new ArrayList<>();
   private RacingAPI api;
   private final List<RaceSession> raceSessions = new ArrayList<>();
@@ -238,6 +247,7 @@ public class RacingManager implements Listener {
     }
 
     updateRace(event.getResult().getRaceSession().getRace(), () -> {
+      Bukkit.getPluginManager().callEvent(new RaceResultUpdatedEvent(event.getResult().getRaceSession().getRace()));
     });
   }
 
@@ -375,14 +385,17 @@ public class RacingManager implements Listener {
       Bukkit.getPluginManager().callEvent(new DeleteRaceEvent(race));
     }
     racesByName.clear();
+    racesById.clear();
     races.clear();
 
     api.fetchAllRaces((List<Race> fetchedRaces) -> {
       for (Race race : fetchedRaces) {
         racesByName.put(race.getName(), race);
+        racesById.put(race.getId(), race);
         races.add(race);
         Bukkit.getPluginManager().callEvent(new CreateRaceEvent(race));
       }
+      Bukkit.getPluginManager().callEvent(new RacesLoadedEvent());
     });
   }
 
@@ -428,6 +441,7 @@ public class RacingManager implements Listener {
     api.updateRace(race, (Boolean result) -> Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
       if (result) {
         racesByName.put(race.getName(), race);
+        racesById.put(race.getId(), race);
         races.add(race);
         Bukkit.getPluginManager().callEvent(new CreateRaceEvent(race));
         callback.run();
@@ -439,6 +453,7 @@ public class RacingManager implements Listener {
     api.deleteRace(race, (Boolean result) -> Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
       if (result) {
         racesByName.remove(race.getName());
+        racesById.remove(race.getId());
         races.remove(race);
         Bukkit.getPluginManager().callEvent(new DeleteRaceEvent(race));
         runnable.run();
@@ -478,6 +493,10 @@ public class RacingManager implements Listener {
 
   public Race getRace(String name) {
     return racesByName.get(name);
+  }
+
+  public Race getRace(UUID id) {
+    return racesById.get(id);
   }
 
   public List<Race> getRaces() {

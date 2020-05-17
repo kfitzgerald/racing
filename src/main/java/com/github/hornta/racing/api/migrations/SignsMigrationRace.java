@@ -1,12 +1,12 @@
 package com.github.hornta.racing.api.migrations;
 
-import com.github.hornta.racing.api.IFileMigration;
+import com.github.hornta.racing.api.IRaceFileMigration;
 import com.github.hornta.racing.enums.RaceVersion;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.Collections;
 
-public class SignsMigration implements IFileMigration {
+public class SignsMigrationRace implements IRaceFileMigration {
   @Override
   public RaceVersion from() {
     return RaceVersion.V4;

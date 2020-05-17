@@ -29,38 +29,15 @@ public class CommandTop extends RacingCommand implements ICommandHandler {
   }
 
   static public void sendTopMessage(CommandSender target, Race race, int laps, RaceStatType statType) {
-    String lapWord = MessageManager.getMessage((laps > 1) ? MessageKey.LAP_PLURAL : MessageKey.LAP_SINGULAR).toLowerCase();
-    MessageManager.setValue("type", MessageManager.getMessage(statType.getKey()));
-    MessageManager.setValue("laps", laps);
-    MessageManager.setValue("lap_word", lapWord);
+    MessageManager.setValue("type", statType.getFormattedStat(laps));
     MessageManager.setValue("race_name", race.getName());
     MessageManager.sendMessage(target, MessageKey.RACE_TOP_HEADER);
   
-    Set<RacePlayerStatistic> results = (statType == RaceStatType.FASTEST) ? race.getResultsForLapCount(laps) : race.getResults(statType);
+    Set<RacePlayerStatistic> results = race.getResults(statType, laps);
     int i = 1;
     for(RacePlayerStatistic result : results) {
-
-      String value = "";
-      switch (statType) {
-        case WIN_RATIO:
-          value = (int)((float)result.getWins() / result.getRuns() * 100) + "%";
-          break;
-        case FASTEST:
-          value = Util.getTimeLeft(result.getRecord(laps));
-          break;
-        case FASTEST_LAP:
-          value = Util.getTimeLeft(result.getFastestLap());
-          break;
-        case WINS:
-          value = result.getWins() + "";
-          break;
-        case RUNS:
-          value = result.getRuns() + "";
-          break;
-        default:
-      }
-
       Util.setTimeUnitValues();
+      String value = result.getStatValue(statType, laps);
       MessageManager.setValue("position", i++);
       MessageManager.setValue("value", value);
       MessageManager.setValue("player_name", result.getPlayerName());
@@ -71,7 +48,7 @@ public class CommandTop extends RacingCommand implements ICommandHandler {
       }
     }
   
-    for(int k = i; k < 10; k++) {
+    for(int k = i; k <= 10; k++) {
       MessageManager.setValue("position", k);
       MessageManager.sendMessage(target, MessageKey.RACE_TOP_ITEM_NONE);
     }

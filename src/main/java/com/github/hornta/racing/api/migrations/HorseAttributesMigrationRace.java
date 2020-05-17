@@ -1,23 +1,23 @@
 package com.github.hornta.racing.api.migrations;
 
-import com.github.hornta.racing.api.FileAPI;
-import com.github.hornta.racing.api.IFileMigration;
+import com.github.hornta.racing.api.IRaceFileMigration;
 import com.github.hornta.racing.enums.RaceVersion;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-public class WalkSpeedMigration implements IFileMigration {
+public class HorseAttributesMigrationRace implements IRaceFileMigration {
   @Override
   public RaceVersion from() {
-    return RaceVersion.V2;
+    return RaceVersion.V8;
   }
 
   @Override
   public RaceVersion to() {
-    return RaceVersion.V3;
+    return RaceVersion.V9;
   }
 
   @Override
   public void migrate(YamlConfiguration yamlConfiguration) {
-    yamlConfiguration.set(FileAPI.WALK_SPEED_FIELD, 0.2D);
+    yamlConfiguration.set("horse_speed", 0.225D);
+    yamlConfiguration.set("horse_jump_strength", 0.7D);
   }
 }

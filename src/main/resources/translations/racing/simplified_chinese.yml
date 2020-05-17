@@ -122,6 +122,41 @@ commands:
     item_none: "§e#<position> §f-"
   race_reset_top:
     success: '§eLeaderboard for race §a<race_name> §e has been reset.'
+  hd_top_list_create:
+    success: |-
+      §eHologram top list was created.
+    already_exist: |-
+      §cThere is already a hologram top list with name `<name>`.
+    error_no_persist: |-
+      §cHologram top list couldn't be saved to file. Check your console for a more detailed error to solve it otherwise the hologram top list will be removed on the next restart.
+  hd_top_list_delete:
+    success: |-
+      §eHologram top list was removed.
+    error_fail_delete_file: |-
+      §cHologram top list file couldn't be removed. Try and delete the file manually otherwise the hologram top list would be created on the next reload.
+  hd_top_list_move:
+    success: |-
+      §eHologram top list has moved to your location.
+  hd_top_list_set_race:
+    success: |-
+      §eHologram top list changed race from §a<old_race> §eto §a<new_race>§e.
+  hd_top_list_set_stat:
+    success: |-
+      §eHologram top list changed stat type from §6<old_stat> §eto §6<new_stat>§e.
+  hd_top_list_set_laps:
+    success: |-
+      §eHologram top list changed number of laps to §6<old_laps> §eto §6<new_laps>§e.
+  hd_top_list_list:
+    header: |-
+      §elHologram top lists:
+    item: |-
+      §6<top_list>
+    item_info: |-
+      §f(§erace: §a<race>§r, §estat: §6<stat>§r§f)
+    teleport_click: |-
+      /rc hdtoplist teleport <top_list>
+    teleport_hover: |-
+      §l§bTeleport to the top list
 
 validators:
   race_not_found: §c找不到名为`<race_name>`的竞赛.
@@ -157,6 +192,7 @@ validators:
   race_potion_effect_not_found: §c在竞赛`<race_name>`中没有名为`<potion_effect>`的药水效果.
   potion_effect_not_found: §c没有名为`<potion_effect>`的药水效果.
   stat_type_not_found: "§cThere is no stat type with name `<stat_type>`. Possible values: <stat_types>"
+  hd_top_list_not_found: "§cThere is not hologram top list with name `<name>`."
 
 race_canceled: §e玩家不足，竞赛取消.
 race_start_noshow_disqualified: §e<player_name>缺席竞赛，已取消竞赛资格.
@@ -258,3 +294,13 @@ scoreboard.no_name_stats: "---------"
 
 lap.plural: "Laps"
 lap.singular: "Lap"
+
+hd_top_list.header: |-
+  §a§l§n<race_name>
+  §e§l<stat_type>
+hd_top_list.item: |-
+  §6<position>. §f<player_name> §7- §6<value>
+hd_top_list.none: |-
+  §6<position>. §fn/a
+hd_top_list.footer: |-
+  §e§m-------------

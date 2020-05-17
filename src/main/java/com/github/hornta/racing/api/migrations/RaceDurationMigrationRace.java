@@ -1,7 +1,7 @@
 package com.github.hornta.racing.api.migrations;
 
 import com.github.hornta.racing.api.FileAPI;
-import com.github.hornta.racing.api.IFileMigration;
+import com.github.hornta.racing.api.IRaceFileMigration;
 import com.github.hornta.racing.enums.RaceVersion;
 
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class RaceDurationMigration implements IFileMigration {
+public class RaceDurationMigrationRace implements IRaceFileMigration {
   @Override
   public RaceVersion from() {
     return RaceVersion.V11;

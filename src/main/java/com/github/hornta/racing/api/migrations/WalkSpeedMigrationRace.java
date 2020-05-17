@@ -1,23 +1,23 @@
 package com.github.hornta.racing.api.migrations;
 
 import com.github.hornta.racing.api.FileAPI;
-import com.github.hornta.racing.api.IFileMigration;
+import com.github.hornta.racing.api.IRaceFileMigration;
 import com.github.hornta.racing.enums.RaceVersion;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-public class PotionEffectsMigration implements IFileMigration {
+public class WalkSpeedMigrationRace implements IRaceFileMigration {
   @Override
   public RaceVersion from() {
-    return RaceVersion.V3;
+    return RaceVersion.V2;
   }
 
   @Override
   public RaceVersion to() {
-    return RaceVersion.V4;
+    return RaceVersion.V3;
   }
 
   @Override
   public void migrate(YamlConfiguration yamlConfiguration) {
-    yamlConfiguration.createSection(FileAPI.POTION_EFFECTS_FIELD);
+    yamlConfiguration.set(FileAPI.WALK_SPEED_FIELD, 0.2D);
   }
 }

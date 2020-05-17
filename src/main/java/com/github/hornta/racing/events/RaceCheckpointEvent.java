@@ -4,7 +4,7 @@ import com.github.hornta.racing.objects.Race;
 import com.github.hornta.racing.objects.RaceCheckpoint;
 
 abstract public class RaceCheckpointEvent extends RaceEvent {
-  private RaceCheckpoint checkpoint;
+  private final RaceCheckpoint checkpoint;
 
   RaceCheckpointEvent(Race race, RaceCheckpoint checkpoint) {
     super(race);

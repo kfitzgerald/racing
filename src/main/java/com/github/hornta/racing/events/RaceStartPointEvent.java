@@ -4,7 +4,7 @@ import com.github.hornta.racing.objects.Race;
 import com.github.hornta.racing.objects.RaceStartPoint;
 
 abstract public class RaceStartPointEvent extends RaceEvent {
-  private RaceStartPoint startPoint;
+  private final RaceStartPoint startPoint;
 
   RaceStartPointEvent(Race race, RaceStartPoint startPoint) {
     super(race);

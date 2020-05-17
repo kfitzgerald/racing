@@ -43,9 +43,17 @@ public enum Permission {
   COMMAND_HELP("racing.command.help"),
   COMMAND_INFO("racing.command.info"),
   COMMAND_TOP("racing.command.top"),
-  COMMAND_RESET_TOP("racing.command.reset_top");
+  COMMAND_RESET_TOP("racing.command.reset_top"),
+  COMMAND_CREATE_HD_TOP_LIST("racing.command.createhdtoplist"),
+  COMMAND_DELETE_HD_TOP_LIST("racing.command.deletehdtoplist"),
+  COMMAND_MOVE_HD_TOP_LIST("racing.command.movehdtoplist"),
+  COMMAND_SET_RACE_HD_TOP_LIST("racing.command.setracehdtoplist"),
+  COMMAND_SET_STAT_HD_TOP_LIST("racing.command.setstathdtoplist"),
+  COMMAND_SET_LAPS_HD_TOP_LIST("racing.command.setlapshdtoplist"),
+  COMMAND_LIST_HD_TOP_LIST("racing.command.listhdtoplist"),
+  COMMAND_TELEPORT_HD_TOP_LIST("racing.command.teleporthdtoplist");
 
-  private String node;
+  private final String node;
 
   Permission(String node) {
     this.node = node;

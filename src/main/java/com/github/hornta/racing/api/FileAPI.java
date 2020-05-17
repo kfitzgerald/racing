@@ -2,27 +2,34 @@ package com.github.hornta.racing.api;
 
 import com.github.hornta.racing.ConfigKey;
 import com.github.hornta.racing.RacingPlugin;
-import com.github.hornta.racing.api.migrations.CommandsMigration;
-import com.github.hornta.racing.api.migrations.EntryFeeMigration;
-import com.github.hornta.racing.api.migrations.HorseAttributesMigration;
-import com.github.hornta.racing.api.migrations.MinimumRequiredParticipantsToStartMigration;
-import com.github.hornta.racing.api.migrations.PigSpeedMigration;
-import com.github.hornta.racing.api.migrations.PotionEffectsMigration;
-import com.github.hornta.racing.api.migrations.RaceDurationMigration;
-import com.github.hornta.racing.api.migrations.ResultsMigration;
-import com.github.hornta.racing.api.migrations.SignLapsMigration;
-import com.github.hornta.racing.api.migrations.SignTypeMigration;
-import com.github.hornta.racing.api.migrations.SignsMigration;
-import com.github.hornta.racing.api.migrations.StartOrderMigration;
-import com.github.hornta.racing.api.migrations.WalkSpeedMigration;
+import com.github.hornta.racing.api.migrations.CommandsMigrationRace;
+import com.github.hornta.racing.api.migrations.EntryFeeMigrationRace;
+import com.github.hornta.racing.api.migrations.HorseAttributesMigrationRace;
+import com.github.hornta.racing.api.migrations.MinimumRequiredParticipantsToStartMigrationRace;
+import com.github.hornta.racing.api.migrations.PigSpeedMigrationRace;
+import com.github.hornta.racing.api.migrations.PotionEffectsMigrationRace;
+import com.github.hornta.racing.api.migrations.RaceDurationMigrationRace;
+import com.github.hornta.racing.api.migrations.ResultsMigrationRace;
+import com.github.hornta.racing.api.migrations.SignLapsMigrationRace;
+import com.github.hornta.racing.api.migrations.SignTypeMigrationRace;
+import com.github.hornta.racing.api.migrations.SignsMigrationRace;
+import com.github.hornta.racing.api.migrations.StartOrderMigrationRace;
+import com.github.hornta.racing.api.migrations.WalkSpeedMigrationRace;
 import com.github.hornta.racing.enums.RaceCommandType;
 import com.github.hornta.racing.enums.RaceSignType;
 import com.github.hornta.racing.enums.RaceState;
 import com.github.hornta.racing.enums.RaceType;
 import com.github.hornta.racing.enums.RaceVersion;
 import com.github.hornta.racing.enums.StartOrder;
-import com.github.hornta.racing.objects.*;
 
+import com.github.hornta.racing.migration.ParseYamlLocationException;
+import com.github.hornta.racing.objects.Race;
+import com.github.hornta.racing.objects.RaceCheckpoint;
+import com.github.hornta.racing.objects.RaceCommand;
+import com.github.hornta.racing.objects.RacePlayerStatistic;
+import com.github.hornta.racing.objects.RacePotionEffect;
+import com.github.hornta.racing.objects.RaceSign;
+import com.github.hornta.racing.objects.RaceStartPoint;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -91,31 +98,31 @@ public class FileAPI implements RacingAPI {
   public static final String COMMANDS_FIELD = "commands";
 
   private final ExecutorService fileService = Executors.newSingleThreadExecutor();
-  private final File racesDirectory;
-  private final MigrationManager migrationManager = new MigrationManager();
+  private final File directory;
+  private final RaceMigrationManager migrationManager = new RaceMigrationManager();
 
   public FileAPI(Plugin plugin) {
-    racesDirectory = new File(plugin.getDataFolder(), RacingPlugin.getInstance().getConfiguration().get(ConfigKey.FILE_RACE_DIRECTORY));
-    migrationManager.addMigration(new EntryFeeMigration());
-    migrationManager.addMigration(new WalkSpeedMigration());
-    migrationManager.addMigration(new PotionEffectsMigration());
-    migrationManager.addMigration(new SignsMigration());
-    migrationManager.addMigration(new ResultsMigration());
-    migrationManager.addMigration(new MinimumRequiredParticipantsToStartMigration());
-    migrationManager.addMigration(new PigSpeedMigration());
-    migrationManager.addMigration(new HorseAttributesMigration());
-    migrationManager.addMigration(new CommandsMigration());
-    migrationManager.addMigration(new SignLapsMigration());
-    migrationManager.addMigration(new RaceDurationMigration());
-    migrationManager.addMigration(new StartOrderMigration());
-    migrationManager.addMigration(new SignTypeMigration());
+    directory = new File(plugin.getDataFolder(), RacingPlugin.getInstance().getConfiguration().get(ConfigKey.FILE_RACE_DIRECTORY));
+    migrationManager.addMigration(new EntryFeeMigrationRace());
+    migrationManager.addMigration(new WalkSpeedMigrationRace());
+    migrationManager.addMigration(new PotionEffectsMigrationRace());
+    migrationManager.addMigration(new SignsMigrationRace());
+    migrationManager.addMigration(new ResultsMigrationRace());
+    migrationManager.addMigration(new MinimumRequiredParticipantsToStartMigrationRace());
+    migrationManager.addMigration(new PigSpeedMigrationRace());
+    migrationManager.addMigration(new HorseAttributesMigrationRace());
+    migrationManager.addMigration(new CommandsMigrationRace());
+    migrationManager.addMigration(new SignLapsMigrationRace());
+    migrationManager.addMigration(new RaceDurationMigrationRace());
+    migrationManager.addMigration(new StartOrderMigrationRace());
+    migrationManager.addMigration(new SignTypeMigrationRace());
   }
 
   @Override
   public void fetchAllRaces(Consumer<List<Race>> callback) {
     CompletableFuture.supplyAsync(() -> {
       List<YamlConfiguration> races = new ArrayList<>();
-      File[] files = racesDirectory.listFiles();
+      File[] files = directory.listFiles();
 
       if (files == null) {
         return races;
@@ -134,13 +141,13 @@ public class FileAPI implements RacingAPI {
             }
             races.add(yaml);
           } catch (Exception ex) {
-            RacingPlugin.logger().log(Level.SEVERE, ex.getMessage(), ex);
+            RacingPlugin.logger().log(Level.SEVERE, ex.getMessage());
           }
         }
       }
 
       return races;
-    }).thenAccept((List<YamlConfiguration> configurations) -> Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
+    }).thenAccept((Iterable<YamlConfiguration> configurations) -> Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
       List<Race> races = new ArrayList<>();
 
       for (YamlConfiguration config : configurations) {
@@ -157,7 +164,7 @@ public class FileAPI implements RacingAPI {
 
   @Override
   public void deleteRace(Race race, Consumer<Boolean> callback) {
-    File raceFile = new File(racesDirectory, race.getId() + ".yml");
+    File raceFile = new File(directory, race.getId() + ".yml");
 
     CompletableFuture.supplyAsync(() -> {
       boolean success = false;
@@ -169,7 +176,7 @@ public class FileAPI implements RacingAPI {
       } catch (DirectoryNotEmptyException ex) {
         RacingPlugin.logger().log(Level.SEVERE, "Failed to delete race file. Expected a file but tried to delete a folder", ex);
       } catch (IOException ex) {
-        RacingPlugin.logger().log(Level.SEVERE, ex.getMessage(), ex);
+        RacingPlugin.logger().log(Level.SEVERE, ex.getMessage());
       }
 
       return success;
@@ -178,7 +185,7 @@ public class FileAPI implements RacingAPI {
 
   @Override
   public void updateRace(Race race, Consumer<Boolean> callback) {
-    File raceFile = new File(racesDirectory, race.getId() + ".yml");
+    File raceFile = new File(directory, race.getId() + ".yml");
 
     CompletableFuture.supplyAsync(() -> {
       YamlConfiguration yaml = new YamlConfiguration();
@@ -223,7 +230,7 @@ public class FileAPI implements RacingAPI {
 
   @Override
   public void addCheckpoint(UUID raceId, RaceCheckpoint checkpoint, Consumer<Boolean> callback) {
-    File raceFile = new File(racesDirectory, raceId + ".yml");
+    File raceFile = new File(directory, raceId + ".yml");
 
     CompletableFuture.supplyAsync(() -> {
       YamlConfiguration yaml = YamlConfiguration.loadConfiguration(raceFile);
@@ -252,7 +259,7 @@ public class FileAPI implements RacingAPI {
 
   @Override
   public void deleteCheckpoint(UUID raceId, RaceCheckpoint checkpoint, Consumer<Boolean> callback) {
-    File raceFile = new File(racesDirectory, raceId + ".yml");
+    File raceFile = new File(directory, raceId + ".yml");
 
     CompletableFuture.supplyAsync(() -> {
       YamlConfiguration yaml = YamlConfiguration.loadConfiguration(raceFile);
@@ -282,7 +289,7 @@ public class FileAPI implements RacingAPI {
 
   @Override
   public void addStartPoint(UUID raceId, RaceStartPoint startPoint, Consumer<Boolean> callback) {
-    File raceFile = new File(racesDirectory, raceId + ".yml");
+    File raceFile = new File(directory, raceId + ".yml");
 
     CompletableFuture.supplyAsync(() -> {
       YamlConfiguration yaml = YamlConfiguration.loadConfiguration(raceFile);
@@ -311,7 +318,7 @@ public class FileAPI implements RacingAPI {
 
   @Override
   public void deleteStartPoint(UUID raceId, RaceStartPoint startPoint, Consumer<Boolean> callback) {
-    File raceFile = new File(racesDirectory, raceId + ".yml");
+    File raceFile = new File(directory, raceId + ".yml");
 
     CompletableFuture.supplyAsync(() -> {
       YamlConfiguration yaml = YamlConfiguration.loadConfiguration(raceFile);

@@ -1,25 +1,25 @@
 package com.github.hornta.racing.api.migrations;
 
 import com.github.hornta.racing.api.FileAPI;
-import com.github.hornta.racing.api.IFileMigration;
+import com.github.hornta.racing.api.IRaceFileMigration;
 import com.github.hornta.racing.enums.RaceVersion;
-import com.github.hornta.racing.enums.StartOrder;
-
 import org.bukkit.configuration.file.YamlConfiguration;
 
-public class StartOrderMigration implements IFileMigration {
+import java.util.Collections;
+
+public class CommandsMigrationRace implements IRaceFileMigration {
   @Override
   public RaceVersion from() {
-    return RaceVersion.V12;
+    return RaceVersion.V9;
   }
 
   @Override
   public RaceVersion to() {
-    return RaceVersion.V13;
+    return RaceVersion.V10;
   }
 
   @Override
   public void migrate(YamlConfiguration yamlConfiguration) {
-    yamlConfiguration.set(FileAPI.START_ORDER_FIELD, StartOrder.RANDOM.name());
+    yamlConfiguration.set(FileAPI.COMMANDS_FIELD, Collections.emptyList());
   }
 }

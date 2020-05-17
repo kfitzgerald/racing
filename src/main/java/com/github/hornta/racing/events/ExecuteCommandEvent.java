@@ -5,11 +5,12 @@ import com.github.hornta.racing.objects.RacePlayerSession;
 import com.github.hornta.racing.objects.RaceSession;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.NotNull;
 
 public class ExecuteCommandEvent extends Event {
   private static final HandlerList handlers = new HandlerList();
-  private RaceCommandType commandType;
-  private RaceSession raceSession;
+  private final RaceCommandType commandType;
+  private final RaceSession raceSession;
   private RacePlayerSession playerSession;
 
   public ExecuteCommandEvent(RaceCommandType commandType, RaceSession raceSession) {
@@ -40,7 +41,7 @@ public class ExecuteCommandEvent extends Event {
   }
 
   @Override
-  public HandlerList getHandlers() {
+  public @NotNull HandlerList getHandlers() {
     return handlers;
   }
 }

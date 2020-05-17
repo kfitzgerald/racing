@@ -44,7 +44,7 @@ public class RaceArgumentHandler implements IArgumentHandler {
   @Override
   public void whenInvalid(ValidationResult result) {
     MessageKey message;
-    if(this.shouldExist) {
+    if(shouldExist) {
       message = MessageKey.RACE_NOT_FOUND;
     } else {
       message = MessageKey.RACE_ALREADY_EXIST;

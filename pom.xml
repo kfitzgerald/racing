@@ -6,7 +6,7 @@
 
     <groupId>com.github.hornta</groupId>
     <artifactId>racing</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -67,8 +67,8 @@
                             <shadedPattern>${project.groupId}.${project.artifactId}.commando</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>com.github.hornta.versioned-config</pattern>
-                            <shadedPattern>${project.groupId}.${project.artifactId}.versioned-config</shadedPattern>
+                            <pattern>com.github.hornta.versioned_config</pattern>
+                            <shadedPattern>${project.groupId}.${project.artifactId}.versioned_config</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>

@@ -1,16 +1,18 @@
 package com.github.hornta.racing.objects;
 
-import java.util.HashMap;
+import com.github.hornta.racing.Util;
+import com.github.hornta.racing.enums.RaceStatType;
+
 import java.util.Map;
 import java.util.UUID;
 
 public class RacePlayerStatistic {
-  private UUID playerId;
+  private final UUID playerId;
   private String playerName;
   private int wins;
   private int runs;
   private long fastestLap;
-  private Map<Integer, Long> records = new HashMap<>();
+  private final Map<Integer, Long> records;
 
   public RacePlayerStatistic(UUID playerId, String playerName, int wins, int runs, long fastestLap, Map<Integer, Long> records) {
     this.playerId = playerId;
@@ -78,11 +80,32 @@ public class RacePlayerStatistic {
     this.wins = wins;
   }
 
-  public void setRecord(int laps, long time)
-  {
-    if((records.containsKey(laps) && ((Number)records.get(laps)).longValue() > time) || !records.containsKey(laps))
-    {
+  public void setRecord(int laps, long time) {
+    if(!records.containsKey(laps) || ((Number) records.get(laps)).longValue() > time) {
       records.put(laps, time);
     }
+  }
+
+  public String getStatValue(RaceStatType statType, int laps) {
+    String value = "";
+    switch (statType) {
+      case WIN_RATIO:
+        value = (int)((float) wins / runs * 100) + "%";
+        break;
+      case FASTEST:
+        value = Util.getTimeLeft(getRecord(laps));
+        break;
+      case FASTEST_LAP:
+        value = Util.getTimeLeft(fastestLap);
+        break;
+      case WINS:
+        value = wins + "";
+        break;
+      case RUNS:
+        value = runs + "";
+        break;
+      default:
+    }
+    return value;
   }
 }

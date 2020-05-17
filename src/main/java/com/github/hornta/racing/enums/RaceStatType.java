@@ -1,5 +1,6 @@
 package com.github.hornta.racing.enums;
 
+import com.github.hornta.messenger.MessageManager;
 import com.github.hornta.racing.MessageKey;
 
 public enum RaceStatType {
@@ -9,13 +10,20 @@ public enum RaceStatType {
   RUNS(MessageKey.RACE_TOP_TYPE_MOST_RUNS),
   WIN_RATIO(MessageKey.RACE_TOP_TYPE_WIN_RATIO);
 
-  private MessageKey key;
+  private final MessageKey messageKey;
 
-  RaceStatType(MessageKey key) {
-    this.key = key;
+  RaceStatType(MessageKey messageKey) {
+    this.messageKey = messageKey;
   }
 
-  public MessageKey getKey() {
-    return key;
+  public MessageKey getMessageKey() {
+    return messageKey;
+  }
+
+  public String getFormattedStat(int laps) {
+    String lapWord = MessageManager.getMessage((laps > 1) ? MessageKey.LAP_PLURAL : MessageKey.LAP_SINGULAR).toLowerCase();
+    MessageManager.setValue("laps", laps);
+    MessageManager.setValue("lap_word", lapWord);
+    return MessageManager.getMessage(messageKey);
   }
 }
