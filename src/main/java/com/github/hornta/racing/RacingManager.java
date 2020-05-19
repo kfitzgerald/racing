@@ -54,6 +54,7 @@ import org.bukkit.plugin.PluginManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -231,9 +232,12 @@ public class RacingManager implements Listener {
     List<PlayerSessionResult> sortedResults = new ArrayList<>(event.getResult().getPlayerResults().values());
     sortedResults.sort(Comparator.comparingInt(PlayerSessionResult::getPosition));
 
+    Collection<Player> messagePlayers = new ArrayList<>();
+
     for (PlayerSessionResult result : sortedResults) {
       Race race = event.getResult().getRaceSession().getRace();
       race.addResult(result);
+      messagePlayers.add(result.getPlayerSession().getPlayer());
 
       int position = result.getPosition();
       if (position <= 10) {
@@ -242,7 +246,14 @@ public class RacingManager implements Listener {
         MessageManager.setValue("race_name", race.getName());
         MessageManager.setValue("time", Util.getTimeLeft(result.getTime()));
         Util.setTimeUnitValues();
-        MessageManager.broadcast(MessageKey.RACE_PARTICIPANT_RESULT);
+        String playerResultItem = MessageManager.getMessage(MessageKey.RACE_PARTICIPANT_RESULT);
+        if(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.BROADCAST_RESULT_MESSAGE)) {
+          RacingPlugin.getInstance().getServer().broadcastMessage(playerResultItem);
+        } else {
+          for(Player player : messagePlayers) {
+            player.sendMessage(playerResultItem);
+          }
+        }
       }
     }
 
@@ -260,8 +271,11 @@ public class RacingManager implements Listener {
       TeleportAfterRaceWhen when = TeleportAfterRaceWhen.valueOf(whenString.toUpperCase(Locale.ENGLISH));
       if (when == TeleportAfterRaceWhen.EVERYONE_FINISHES) {
         for (RacePlayerSession playerSession : event.getRaceSession().getPlayerSessions()) {
-          PaperLib.teleportAsync(playerSession.getPlayer(), event.getRaceSession().getRace().getSpawn(),
-              PlayerTeleportEvent.TeleportCause.PLUGIN);
+          PaperLib.teleportAsync(
+            playerSession.getPlayer(),
+            event.getRaceSession().getRace().getSpawn(),
+            PlayerTeleportEvent.TeleportCause.PLUGIN
+          );
         }
       }
     }
@@ -581,7 +595,11 @@ public class RacingManager implements Listener {
     MessageManager.setValue("race_name", race.getName());
     MessageManager.setValue("current_participants", session.getAmountOfParticipants());
     MessageManager.setValue("max_participants", race.getStartPoints().size());
-    MessageManager.broadcast(MessageKey.JOIN_RACE_SUCCESS);
+    if(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.BROADCAST_PLAYER_JOIN_MESSAGE)) {
+      MessageManager.broadcast(MessageKey.JOIN_RACE_SUCCESS);
+    } else {
+      MessageManager.sendMessage(player, MessageKey.JOIN_RACE_SUCCESS);
+    }
   }
 
   public StartRaceStatus tryStartRace(String raceName, CommandSender commandSender, int numLaps) {

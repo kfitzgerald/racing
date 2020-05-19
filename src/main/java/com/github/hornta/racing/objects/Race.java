@@ -138,7 +138,7 @@ public class Race implements Listener {
         result.getPlayerSession().getPlayerName(),
         result.getPosition() == 1 ? 1 : 0,
         1,
-        result.getPlayerSession().getFastestLapTime(),
+        result.getPlayerSession().getFastestLap(),
         records
       );
     } else {
@@ -148,8 +148,8 @@ public class Race implements Listener {
       if (result.getPosition() == 1) {
         newStat.setWins(newStat.getWins() + 1);
       }
-      if(newStat.getFastestLap() > result.getPlayerSession().getFastestLapTime()) {
-        newStat.setFastestLap(result.getPlayerSession().getFastestLapTime());
+      if(newStat.getFastestLap() > result.getPlayerSession().getFastestLap()) {
+        newStat.setFastestLap(result.getPlayerSession().getFastestLap());
       }
       int laps = result.getPlayerSession().getCurrentLap();
       if(newStat.getRecord(laps) > result.getTime())

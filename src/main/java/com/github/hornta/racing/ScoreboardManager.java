@@ -30,7 +30,6 @@ public class ScoreboardManager implements Listener {
   private final String RACE_FASTEST_LAP_TIME = ChatColor.DARK_PURPLE.toString();
   private final String PERSONAL_RECORD_LAP_TIME = ChatColor.DARK_RED.toString();
 
-  private final String SCOREBOARD_OBJECTIVE = "hornta.Racing";
   private final String HEADING = "heading";
   private final String NO_TIME_STATS = "noTimeStats";
   private final String NO_NAME_STATS = "noNameStats";
@@ -50,10 +49,10 @@ public class ScoreboardManager implements Listener {
   /// Public Functions
 
   public ScoreboardManager() {
-    this.headingFormat = MessageManager.getMessage(MessageKey.SCOREBOARD_HEADING_FORMAT);
-    this.titleFormat = MessageManager.getMessage(MessageKey.SCOREBOARD_TITLE_FORMAT);
-    this.textFormat = MessageManager.getMessage(MessageKey.SCOREBOARD_TEXT_FORMAT);
-    this.displayMillis = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_DISPLAY_MILLISECONDS);
+    headingFormat = MessageManager.getMessage(MessageKey.SCOREBOARD_HEADING_FORMAT);
+    titleFormat = MessageManager.getMessage(MessageKey.SCOREBOARD_TITLE_FORMAT);
+    textFormat = MessageManager.getMessage(MessageKey.SCOREBOARD_TEXT_FORMAT);
+    displayMillis = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_DISPLAY_MILLISECONDS);
 
     configMap.put(WORLD_RECORD, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_WORLD_RECORD));
     configMap.put(WORLD_RECORD_HOLDER, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_WORLD_RECORD_HOLDER));
@@ -80,7 +79,7 @@ public class ScoreboardManager implements Listener {
 
   @EventHandler
   void onConfigReloaded(ConfigReloadedEvent event) {
-    this.displayMillis = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_DISPLAY_MILLISECONDS);
+    displayMillis = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_DISPLAY_MILLISECONDS);
     configMap.clear();
     configMap.put(WORLD_RECORD, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_WORLD_RECORD));
     configMap.put(WORLD_RECORD_HOLDER, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_WORLD_RECORD_HOLDER));
@@ -91,7 +90,7 @@ public class ScoreboardManager implements Listener {
     configMap.put(RACE_TIME, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_TIME));
     configMap.put(RACE_CURRENT_LAP_TIME, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_LAP_TIME));
     configMap.put(RACE_FASTEST_LAP_TIME, RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_FASTEST_LAP));
-    this.rowsNeeded = calculateNumberOfRowsNeeded();
+    rowsNeeded = calculateNumberOfRowsNeeded();
   }
 
   public void addScoreboard(Player player, String raceName, int laps) {
@@ -99,6 +98,7 @@ public class ScoreboardManager implements Listener {
     String mainHeading = translationMap.get(HEADING);
 
     Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
+    String SCOREBOARD_OBJECTIVE = "hornta.Racing";
     Objective objective = board.registerNewObjective(player.getName(), SCOREBOARD_OBJECTIVE, mainHeading);
     objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
@@ -157,24 +157,20 @@ public class ScoreboardManager implements Listener {
     updateTime(player, liveTimeMillis, RACE_TIME);
   }
   
-  public void updateRaceCurrentLapTime(Player player, long liveTimeMillis)
-  {
+  public void updateRaceCurrentLapTime(Player player, long liveTimeMillis) {
     updateTime(player, liveTimeMillis, RACE_CURRENT_LAP_TIME);
   }
 
-  public void updateRaceFastestLap(Player player, long fastestLapTime)
-  {
+  public void updateRaceFastestLap(Player player, long fastestLapTime) {
     updateTime(player, fastestLapTime, RACE_FASTEST_LAP_TIME);
   }
 
-  public void updatePersonalBestLapTime(Player player, long pbLapTime)
-  {
+  public void updatePersonalBestLapTime(Player player, long pbLapTime) {
     String value = (pbLapTime != Long.MAX_VALUE) ? formatTime(pbLapTime) : translationMap.get(NO_TIME_STATS);
     updateString(player, value+translationMap.get(LAP_TAG), PERSONAL_RECORD_LAP_TIME);
   }
 
-  private void updateTime(Player player, long timeMillis, String scoreboardTeam)
-  {
+  private void updateTime(Player player, long timeMillis, String scoreboardTeam) {
     if(timeMillis != Long.MAX_VALUE)
     {
       updateString(player, formatTime(timeMillis), scoreboardTeam);
@@ -188,8 +184,7 @@ public class ScoreboardManager implements Listener {
   private void updateString(Player player, String value, String scoreboardTeam) {
     if(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_ENABLED)) {
       Scoreboard board = player.getScoreboard();
-      if (configMap.get(scoreboardTeam))
-      {
+      if (configMap.get(scoreboardTeam)) {
         board.getTeam(scoreboardTeam).setPrefix(convertText(value));
       }
     }

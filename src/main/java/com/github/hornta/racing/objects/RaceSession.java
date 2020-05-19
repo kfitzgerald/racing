@@ -44,7 +44,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -60,6 +62,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -100,10 +103,6 @@ public class RaceSession implements Listener {
     }
   }
 
-  public CommandSender getInitiator() {
-    return initiator;
-  }
-
   public int getLaps() {
     return laps;
   }
@@ -122,40 +121,54 @@ public class RaceSession implements Listener {
     return race;
   }
 
-  public void start() {
-    result = new RaceSessionResult(this);
-    Bukkit.getServer().getPluginManager().registerEvents(this, RacingPlugin.getInstance());
-
+  private ComponentBuilder makeJoinChatCommand() {
     HoverEvent hoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(MessageManager.getMessage(MessageKey.PARTICIPATE_HOVER_TEXT)).create());
-
     MessageManager.setValue("race_name", race.getName());
     ClickEvent clickEvent = new ClickEvent(ClickEvent.Action.RUN_COMMAND, MessageManager.getMessage(MessageKey.PARTICIPATE_CLICK_TEXT));
+    return new ComponentBuilder("").event(hoverEvent).event(clickEvent);
+  }
 
-    int prepareTime = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RACE_PREPARE_TIME);
+  private void broadcastStartMessage() {
+    if(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.BROADCAST_START_RACE_MESSAGE)) {
+      int prepareTime = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RACE_PREPARE_TIME);
 
-    MessageManager.setValue("race_name", race.getName());
-    MessageManager.setValue("time_left", Util.getTimeLeft(prepareTime * 1000));
-    MessageManager.setValue("laps", laps);
+      MessageManager.setValue("race_name", race.getName());
+      MessageManager.setValue("time_left", Util.getTimeLeft(prepareTime * 1000));
+      MessageManager.setValue("laps", laps);
 
-    MessageKey key = MessageKey.PARTICIPATE_TEXT;
-    Economy economy = RacingPlugin.getInstance().getEconomy();
+      MessageKey key = MessageKey.PARTICIPATE_TEXT;
+      Economy economy = RacingPlugin.getInstance().getEconomy();
 
-    if(economy != null) {
-      key = MessageKey.PARTICIPATE_TEXT_FEE;
-      MessageManager.setValue("entry_fee", economy.format(race.getEntryFee()));
+      if (economy != null) {
+        key = MessageKey.PARTICIPATE_TEXT_FEE;
+        MessageManager.setValue("entry_fee", economy.format(race.getEntryFee()));
+      }
+
+      Util.setTimeUnitValues();
+      String participateText = MessageManager.getMessage(key);
+
+      Bukkit.getServer().spigot().broadcast(new ComponentBuilder(makeJoinChatCommand()).append(participateText).create());
     }
+  }
 
-    ComponentBuilder announceMessage = new ComponentBuilder("").event(hoverEvent).event(clickEvent);
+  private void runAnnouncements() {
+    List<Integer> announceIntervals = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RACE_ANNOUNCE_INTERVALS);
+    int prepareTime = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RACE_PREPARE_TIME);
+    for(int interval : announceIntervals) {
+      if(interval >= prepareTime) {
+        continue;
+      }
+      addStartTimerTask(Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
+        MessageManager.setValue("race_name", race.getName());
+        MessageManager.setValue("time_left", Util.getTimeLeft(interval * 1000));
+        Util.setTimeUnitValues();
+        String timeLeftMessage = MessageManager.getMessage(MessageKey.PARTICIPATE_TEXT_TIMELEFT);
+        Bukkit.getServer().spigot().broadcast(new ComponentBuilder(makeJoinChatCommand()).append(timeLeftMessage).create());
+      }, (long)(prepareTime - interval) * 20));
+    }
+  }
 
-    Util.setTimeUnitValues();
-    Bukkit.getServer().spigot().broadcast(
-      new ComponentBuilder(announceMessage).append(
-        TextComponent.fromLegacyText(MessageManager.getMessage(key))
-      ).create()
-    );
-
-    setState(RaceSessionState.PREPARING);
-
+  private void displayInitiatorControls() {
     MessageManager.setValue("race_name", race.getName());
     ClickEvent skipWaitClickEvent = new ClickEvent(ClickEvent.Action.RUN_COMMAND, MessageManager.getMessage(MessageKey.SKIP_WAIT_CLICK_TEXT));
     MessageManager.setValue("race_name", race.getName());
@@ -183,24 +196,16 @@ public class RaceSession implements Listener {
       );
       initiator.spigot().sendMessage(tc);
     }
-    
-    List<Integer> announceIntervals = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RACE_ANNOUNCE_INTERVALS);
-    for(int interval : announceIntervals) {
-      if(interval >= prepareTime) {
-        continue;
-      }
-      addStartTimerTask(Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
-        MessageManager.setValue("race_name", race.getName());
-        MessageManager.setValue("time_left", Util.getTimeLeft(interval * 1000));
-        Util.setTimeUnitValues();
-        Bukkit.getServer().spigot().broadcast(
-          new ComponentBuilder(announceMessage).append(
-            TextComponent.fromLegacyText(MessageManager.getMessage(MessageKey.PARTICIPATE_TEXT_TIMELEFT))
-          ).create()
-        );
-      }, (long)(prepareTime - interval) * 20));
-    }
+  }
 
+  public void start() {
+    result = new RaceSessionResult(this);
+    Bukkit.getServer().getPluginManager().registerEvents(this, RacingPlugin.getInstance());
+    broadcastStartMessage();
+    setState(RaceSessionState.PREPARING);
+    displayInitiatorControls();
+    runAnnouncements();
+    int prepareTime = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RACE_PREPARE_TIME);
     addStartTimerTask(Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), this::actualStart, prepareTime * 20));
   }
 
@@ -239,7 +244,9 @@ public class RaceSession implements Listener {
     }
 
     if (playerSessions.isEmpty() || getAmountOfParticipants() < race.getMinimimRequiredParticipantsToStart()) {
-      MessageManager.broadcast(MessageKey.RACE_CANCELED);
+      if(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.BROADCAST_CANCEL_MESSAGE)) {
+        MessageManager.broadcast(MessageKey.RACE_CANCELED);
+      }
       stop();
       return;
     }
@@ -256,11 +263,9 @@ public class RaceSession implements Listener {
     long worldRecordFastestLap = Long.MAX_VALUE;
     String worldRecordHolder = "";
     String worldRecordFastestLapHolder = "";
-    for(RacePlayerStatistic playerStatistics : race.getResultByPlayerId().values())
-    {
-      if(worldRecord > playerStatistics.getRecord(this.laps))
-      {
-        worldRecord = playerStatistics.getRecord(this.laps);
+    for(RacePlayerStatistic playerStatistics : race.getResultByPlayerId().values()) {
+      if(worldRecord > playerStatistics.getRecord(laps)) {
+        worldRecord = playerStatistics.getRecord(laps);
         worldRecordHolder = playerStatistics.getPlayerName();
       }
     }
@@ -277,17 +282,15 @@ public class RaceSession implements Listener {
       session.startCooldown();
       tryIncrementCheckpoint(session);
       startPointIndex += 1;
-      scoreboardManager.addScoreboard(session.getPlayer(), race.getName(), this.laps);
+      scoreboardManager.addScoreboard(session.getPlayer(), race.getName(), laps);
       scoreboardManager.updateWorldRecord(session.getPlayer(), worldRecord);
       scoreboardManager.updateWorldRecordHolder(session.getPlayer(), worldRecordHolder);
       scoreboardManager.updateWorldRecordFastestLap(session.getPlayer(), worldRecordFastestLap);
       scoreboardManager.updateWorldRecordFastestLapHolder(session.getPlayer(), worldRecordFastestLapHolder);
-      if(race.getResultByPlayerId().containsKey(session.getPlayerId()))
-      {
+      if(race.getResultByPlayerId().containsKey(session.getPlayerId())) {
         RacePlayerStatistic statistics = race.getResultByPlayerId().get(session.getPlayerId());
         scoreboardManager.updatePersonalBestLapTime(session.getPlayer(), statistics.getFastestLap());
-        if(statistics.getRecord(laps) != Long.MAX_VALUE)
-        {
+        if(statistics.getRecord(laps) != Long.MAX_VALUE) {
           scoreboardManager.updatePersonalBest(session.getPlayer(), statistics.getRecord(laps));
         }
       }
@@ -296,7 +299,7 @@ public class RaceSession implements Listener {
     countdown = new RaceCountdown(playerSessions.values());
     countdown.start(() -> {
       setState(RaceSessionState.STARTED);
-      List<PotionEffect> potionEffects = new ArrayList<>();
+      Collection<PotionEffect> potionEffects = new ArrayList<>();
       for(RacePotionEffect racePotionEffect : race.getPotionEffects()) {
         potionEffects.add(
           new PotionEffect(
@@ -612,7 +615,7 @@ public class RaceSession implements Listener {
     long currentTime = System.currentTimeMillis();
     playerSession.setFastestLapTime(currentTime - playerSession.getLapStartTime());
     playerSession.setLapStartTime(currentTime);
-    scoreboardManager.updateRaceFastestLap(playerSession.getPlayer(), playerSession.getFastestLapTime());
+    scoreboardManager.updateRaceFastestLap(playerSession.getPlayer(), playerSession.getFastestLap());
     scoreboardManager.updatePersonalBestLapTime(playerSession.getPlayer(), playerSession.getPersonalBestLapTime());
   }
 
@@ -1011,5 +1014,3 @@ public class RaceSession implements Listener {
     return result;
   }
 }
-
-

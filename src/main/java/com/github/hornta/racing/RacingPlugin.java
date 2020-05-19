@@ -264,6 +264,15 @@ public class RacingPlugin extends JavaPlugin {
       patch.set(ConfigKey.HD_TOP_LIST_SHOW_FOOTER, "hd_top_list.show_footer", false, Type.BOOLEAN);
       return patch;
     }));
+    cb.addMigration(new Migration<>(3, () -> {
+      Patch<ConfigKey> patch = new Patch<>();
+      patch.set(ConfigKey.BROADCAST_STOP_MESSAGE, "broadcast_stop_message", true, Type.BOOLEAN);
+      patch.set(ConfigKey.BROADCAST_PLAYER_JOIN_MESSAGE, "broadcast_player_join_message", true, Type.BOOLEAN);
+      patch.set(ConfigKey.BROADCAST_CANCEL_MESSAGE, "broadcast_cancel_message", true, Type.BOOLEAN);
+      patch.set(ConfigKey.BROADCAST_RESULT_MESSAGE, "broadcast_result_message", true, Type.BOOLEAN);
+      patch.set(ConfigKey.BROADCAST_START_RACE_MESSAGE, "broadcast_start_race_message", true, Type.BOOLEAN);
+      return patch;
+    }));
     configuration = cb.create();
   }
 

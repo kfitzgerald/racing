@@ -43,7 +43,7 @@ commands:
     error_not_enabled: "§cThis race must be enabled in order to start. Write §7/rc setstate <race_name> enabled §cto enable it."
     error_no_enabled: "§cThere are no enabled race."
   stop_race:
-    success: "§cRace been stopped."
+    success: "§cRace has been stopped."
     error_not_started: "§cRace is not started."
   join_race:
     success: "§e<player_name> entered race `<race_name>`. (<current_participants>/<max_participants> participants)"
