@@ -273,6 +273,11 @@ public class RacingPlugin extends JavaPlugin {
       patch.set(ConfigKey.BROADCAST_START_RACE_MESSAGE, "broadcast_start_race_message", true, Type.BOOLEAN);
       return patch;
     }));
+    cb.addMigration(new Migration<>(4, () -> {
+      Patch<ConfigKey> patch = new Patch<>();
+      patch.set(ConfigKey.PREVENT_JOIN_FROM_WORLD, "prevent_join_from_world", Collections.emptyList(), Type.LIST);
+      return patch;
+    }));
     configuration = cb.create();
   }
 
@@ -316,6 +321,7 @@ public class RacingPlugin extends JavaPlugin {
     m.add(MessageKey.JOIN_RACE_IS_PARTICIPATING_OTHER, "commands.join_race.error_is_participating_other");
     m.add(MessageKey.JOIN_RACE_NOT_AFFORD, "commands.join_race.error_not_afford");
     m.add(MessageKey.JOIN_RACE_GAME_MODE, "commands.join_race.error_game_mode");
+    m.add(MessageKey.JOIN_RACE_WORLD, "commands.join_race.error_world");
     m.add(MessageKey.RACE_SKIP_WAIT_NOT_STARTED, "commands.race_skip_wait.error_not_started");
     m.add(MessageKey.RELOAD_SUCCESS, "commands.reload.success");
     m.add(MessageKey.RELOAD_FAILED, "commands.reload.failed");

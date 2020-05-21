@@ -54,6 +54,8 @@ commands:
     error_is_participating_other: "§cMomentálne ste sa zúčastnili už ďalšieho preteku."
     error_not_afford: "§cNemôžete si dovoliť zúčastniť sa tohto preteku. Poplatok za účasť je  <entry_fee> a vy máte <balance>."
     error_game_mode: "§cNemôžete sa zúčastniť tohto preteku v hernom móde `<game_mode>`."
+    error_world: |-
+      §cYou can't join this race from your current world.
   race_skip_wait:
     error_not_started: "§cPretek musí byť zahájený aby sa mohla preskočiť príprava."
   reload:
