@@ -56,9 +56,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -530,6 +532,11 @@ public class RacingManager implements Listener {
       return;
     }
 
+    if (getNonJoinableWorlds().contains(player.getWorld())) {
+      MessageManager.sendMessage(player, MessageKey.JOIN_RACE_WORLD);
+      return;
+    }
+
     boolean startOnSign = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.START_ON_JOIN_SIGN);
     boolean startOnCommand = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.START_ON_JOIN_COMMAND);
 
@@ -655,14 +662,26 @@ public class RacingManager implements Listener {
     }
   }
 
-  public List<GameMode> getNonJoinableGameModes() {
-    Object value = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.PREVENT_JOIN_FROM_GAME_MODE);
-    ArrayList<GameMode> gameModes = new ArrayList<>();
-    if(value instanceof ArrayList<?>) {
-      for (String gameMode : (ArrayList<String>) value) {
+  public Set<GameMode> getNonJoinableGameModes() {
+    List<String> value = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.PREVENT_JOIN_FROM_GAME_MODE);
+    Set<GameMode> gameModes = new HashSet<>();
+    for (String gameMode : value) {
+      try {
         gameModes.add(GameMode.valueOf(gameMode.toUpperCase(Locale.ENGLISH)));
-      }
+      } catch (IllegalArgumentException ignored) { }
     }
     return gameModes;
+  }
+
+  public Set<World> getNonJoinableWorlds() {
+    List<String> value = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.PREVENT_JOIN_FROM_WORLD);
+    Set<World> worlds = new HashSet<>();
+    for (String world : value) {
+      World gm = Bukkit.getWorld(world);
+      if(gm != null) {
+        worlds.add(gm);
+      }
+    }
+    return worlds;
   }
 }

@@ -54,6 +54,8 @@ commands:
     error_is_participating_other: §c你已加入另一场竞赛.
     error_not_afford: §c你支付不起竞赛所需的入场费. 入场费为 <entry_fee>，但你的荷包里只有<balance>.
     error_game_mode: "§cYou can't join this race when in game mode `<game_mode>`."
+    error_world: |-
+      §cYou can't join this race from your current world.
   race_skip_wait:
     error_not_started: §c必须开始竞赛才能跳过准备阶段.
   reload:
