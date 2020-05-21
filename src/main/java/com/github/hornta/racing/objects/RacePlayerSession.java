@@ -10,14 +10,19 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.TreeSpecies;
+import org.bukkit.attribute.Attributable;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.boss.BossBar;
+import org.bukkit.entity.AbstractHorse;
+import org.bukkit.entity.Ageable;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Horse;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Pig;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Tameable;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -42,19 +47,19 @@ public class RacePlayerSession {
   private long lapStartTime;
   private long fastestLap = Long.MAX_VALUE;
   private long personalBestLapTime = Long.MAX_VALUE;
-  private boolean isAllowedToEnterVehicle;
-  private boolean isAllowedToExitVehicle;
+  private boolean allowedToEnterVehicle;
+  private boolean allowedToExitVehicle;
   private RaceParticipantReset restore;
 
   RacePlayerSession(RaceSession raceSession, Player player, double chargedEntryFee) {
     this.raceSession = raceSession;
     this.player = player;
     this.chargedEntryFee = chargedEntryFee;
-    this.playerId = player.getUniqueId();
-    this.playerName = player.getName();
+    playerId = player.getUniqueId();
+    playerName = player.getName();
     if(raceSession.getRace().getResultByPlayerId().containsKey(playerId))
     {
-      this.personalBestLapTime = raceSession.getRace().getResultByPlayerId().get(playerId).getFastestLap();
+      personalBestLapTime = raceSession.getRace().getResultByPlayerId().get(playerId).getFastestLap();
     }
     RacingPlugin.debug("New RacePlayerSession\nPlayer: %s\nUUID: %s\nCharged: %f", playerName, playerId, chargedEntryFee);
   }
@@ -85,19 +90,16 @@ public class RacePlayerSession {
     return lapStartTime;
   }
 
-  public void setFastestLapTime(long millis)
-  {
-    if(millis < fastestLap)
-    {
+  public void setFastestLapTime(long millis) {
+    if(millis < fastestLap) {
       fastestLap = millis;
     }
-    if(millis < personalBestLapTime)
-    {
+    if(millis < personalBestLapTime) {
       personalBestLapTime = millis;
     }
   }
 
-  public long getFastestLapTime()
+  public long getFastestLap()
   {
     return fastestLap;
   }
@@ -115,19 +117,18 @@ public class RacePlayerSession {
   void startCooldown() {
     RacingPlugin.debug("Starting cooldown for RacePlayerSession %s", playerName);
 
-    restore = new RaceParticipantReset(this);
-
     if(player.isInsideVehicle()) {
       RacingPlugin.debug("%s is inside a vehicle. Attempting to eject it...", player.getName());
-      isAllowedToExitVehicle = true;
+      allowedToExitVehicle = true;
       player.getVehicle().eject();
-      isAllowedToExitVehicle = false;
+      allowedToExitVehicle = false;
       RacingPlugin.debug("Result of ejecting %s from vehicle: %B", player.getName(), player.getVehicle() == null);
     }
 
     RacingPlugin.debug("Teleporting %s to start location", player.getName());
     respawn(RespawnType.FROM_START, () -> {
       player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 2);
+      restore = new RaceParticipantReset(this);
     }, () -> {
       player.setHealth(MAX_HEALTH);
       RacingPlugin.debug("Setting health to %f on %s", MAX_HEALTH, player.getName());
@@ -175,9 +176,9 @@ public class RacePlayerSession {
   }
 
   public void respawnInVehicle(Location location, Runnable runnable, Runnable fireTicksResetCallback) {
-    if(getVehicle() != null) {
+    if(vehicle != null) {
       exitVehicle();
-      getVehicle().remove();
+      vehicle.remove();
     }
 
     switch (raceSession.getRace().getType()) {
@@ -219,21 +220,24 @@ public class RacePlayerSession {
         playerTeleportLoc = playerTeleportLoc.clone().add(0, -0.45, 0);
       }
 
-      PaperLib.teleportAsync(player, playerTeleportLoc, PlayerTeleportEvent.TeleportCause.PLUGIN);
-      RacingPlugin.debug("Teleported %s to vehicle %s", player.getName(), vehicle.getType());
+      PaperLib.teleportAsync(player, playerTeleportLoc, PlayerTeleportEvent.TeleportCause.PLUGIN).thenAccept((Boolean result) -> {
+        Bukkit.getScheduler().runTask(RacingPlugin.getInstance(), () -> {
+          RacingPlugin.debug("Teleported %s to vehicle %s", player.getName(), vehicle.getType());
 
-      // important to set this after teleporting away from a potential source of fire.
-      // 2 ticks looks like the minimum amount of ticks needed to wait after setting it to zero...
-      Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
-        player.setFireTicks(0);
-        if (fireTicksResetCallback != null) {
-          fireTicksResetCallback.run();
-        }
-      }, 2);
-      enterVehicle();
-      if (runnable != null) {
-        runnable.run();
-      }
+          // important to set this after teleporting away from a potential source of fire.
+          // 2 ticks looks like the minimum amount of ticks needed to wait after setting it to zero...
+          Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
+            player.setFireTicks(0);
+            if (fireTicksResetCallback != null) {
+              fireTicksResetCallback.run();
+            }
+          }, 2);
+          enterVehicle();
+          if (runnable != null) {
+            runnable.run();
+          }
+        });
+      });
     }, 1L);
   }
 
@@ -254,7 +258,7 @@ public class RacePlayerSession {
     }
 
     if (player.isSleeping()) {
-      RacingPlugin.debug("%s was sleeping. Trying to wake it up...", player.getName());
+      RacingPlugin.debug("%s was sleeping. Trying to wake them up...", player.getName());
       // 2 seconds of very high resistance
       player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 20, 255, false, false, false));
       player.addPotionEffect(new PotionEffect(PotionEffectType.HARM, 1, 1, false, false, false));
@@ -268,13 +272,29 @@ public class RacePlayerSession {
     switch (raceSession.getRace().getType()) {
       case PLAYER:
       case ELYTRA:
-        PaperLib.teleportAsync(player, loc, PlayerTeleportEvent.TeleportCause.PLUGIN);
-        Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
-          player.setFireTicks(0);
-          if(fireTicksResetCallback != null) {
-            fireTicksResetCallback.run();
-          }
-        }, 2);
+        PaperLib.teleportAsync(player, loc, PlayerTeleportEvent.TeleportCause.PLUGIN).thenAccept((Boolean result) -> {
+          Bukkit.getScheduler().runTaskLater(RacingPlugin.getInstance(), () -> {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
+              player.setFireTicks(0);
+              if(fireTicksResetCallback != null) {
+                fireTicksResetCallback.run();
+              }
+            }, 2);
+
+            if(result && runnable != null) {
+              runnable.run();
+            }
+
+            // Multiverse is changing the players game mode after teleporting to the world containing the
+            // start position which is why we need to run this callback on the CURRENT_TICK + 2 so that
+            // Multiverse has time to run their task that(found in link) before our task so we have the final say
+            // in what game mode the player should have.
+            // https://github.com/Multiverse/Multiverse-Core/blob/1fac13247f297a5d6043b475cade3d18f5d54c2b/src/main/java/com/onarandombox/MultiverseCore/listeners/MVPlayerListener.java#L351
+            //
+            // runTaskLater(, , 0) would make the callback run on the next tick which isn't desirable
+            // because of the above statement
+          }, 1);
+        });
         break;
       case MINECART:
       case BOAT:
@@ -286,33 +306,32 @@ public class RacePlayerSession {
   }
 
   private void spawnVehicle(EntityType type, Location location) {
-    Location spawnLocation = location;
-    RacingPlugin.debug("Attempting to spawn vehicle of type %s at %s", type, spawnLocation);
-    vehicle = startLocation.getWorld().spawnEntity(spawnLocation, type);
+    RacingPlugin.debug("Attempting to spawn vehicle of type %s at %s", type, location);
+    vehicle = startLocation.getWorld().spawnEntity(location, type);
     RacingPlugin.debug("Spawned vehicle at " + vehicle.getLocation());
   }
 
   private void setupPig() {
-    ((Pig)vehicle).setAI(false);
+    ((LivingEntity) vehicle).setAI(false);
     RacingPlugin.debug("Disable pig AI");
     ((Pig)vehicle).setSaddle(true);
     RacingPlugin.debug("Giving pig a saddle");
-    ((Pig)vehicle).getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(raceSession.getRace().getPigSpeed());
+    ((Attributable) vehicle).getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(raceSession.getRace().getPigSpeed());
     RacingPlugin.debug("Setting movementspeed on pig to " + raceSession.getRace().getPigSpeed());
   }
 
   private void setupHorse(HorseData horseData) {
-    ((Horse) vehicle).setAI(false);
+    ((LivingEntity) vehicle).setAI(false);
     RacingPlugin.debug("Disable horse AI");
-    ((Horse) vehicle).setTamed(true);
+    ((Tameable) vehicle).setTamed(true);
     RacingPlugin.debug("Set horse to be tamed");
-    ((Horse) vehicle).setOwner(player);
+    ((Tameable) vehicle).setOwner(player);
     RacingPlugin.debug("Set horse owner to " + player.getName());
-    ((Horse) vehicle).getInventory().setSaddle(new ItemStack(Material.SADDLE, 1));
+    ((AbstractHorse) vehicle).getInventory().setSaddle(new ItemStack(Material.SADDLE, 1));
     RacingPlugin.debug("Giving horse a saddle");
-    ((Horse) vehicle).setJumpStrength(raceSession.getRace().getHorseJumpStrength());
+    ((AbstractHorse) vehicle).setJumpStrength(raceSession.getRace().getHorseJumpStrength());
     RacingPlugin.debug("Setting horse jump strength to" + raceSession.getRace().getHorseJumpStrength());
-    ((Horse) vehicle).getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(raceSession.getRace().getHorseSpeed());
+    ((Attributable) vehicle).getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(raceSession.getRace().getHorseSpeed());
     RacingPlugin.debug("Setting horse movement speed to " + raceSession.getRace().getHorseSpeed());
 
     if(horseData != null) {
@@ -324,19 +343,19 @@ public class RacePlayerSession {
       ((Horse) vehicle).setStyle(horseData.getStyle());
       RacingPlugin.debug("Horse style set to " + ((Horse) vehicle).getStyle());
       RacingPlugin.debug("Attempting to set horse age to " + horseData.getAge());
-      ((Horse) vehicle).setAge(horseData.getAge());
-      RacingPlugin.debug("Horse age set to " + ((Horse) vehicle).getAge());
+      ((Ageable) vehicle).setAge(horseData.getAge());
+      RacingPlugin.debug("Horse age set to " + ((Ageable) vehicle).getAge());
     }
   }
 
   public void freezeHorse() {
-    ((Horse) vehicle).setJumpStrength(0);
-    ((Horse) vehicle).getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
+    ((AbstractHorse) vehicle).setJumpStrength(0);
+    ((Attributable) vehicle).getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
   }
 
   private void unfreezeHorse() {
-    ((Horse) vehicle).getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(raceSession.getRace().getHorseSpeed());
-    ((Horse) vehicle).setJumpStrength(raceSession.getRace().getHorseJumpStrength());
+    ((Attributable) vehicle).getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(raceSession.getRace().getHorseSpeed());
+    ((AbstractHorse) vehicle).setJumpStrength(raceSession.getRace().getHorseJumpStrength());
   }
 
   private void setupBoat() {
@@ -357,25 +376,25 @@ public class RacePlayerSession {
   }
 
   boolean isAllowedToEnterVehicle() {
-    return isAllowedToEnterVehicle;
+    return allowedToEnterVehicle;
   }
 
   boolean isAllowedToExitVehicle() {
-    return isAllowedToExitVehicle;
+    return allowedToExitVehicle;
   }
 
   void enterVehicle() {
-    RacingPlugin.debug("Attempting to enter passanger %s to vehicle %s", player.getName(), getVehicle().getType());
-    isAllowedToEnterVehicle = true;
-    getVehicle().addPassenger(player);
-    isAllowedToEnterVehicle = false;
-    RacingPlugin.debug("Result of attempting to enter %s into %s: %b", player.getName(), getVehicle().getType(), player.isInsideVehicle());
+    RacingPlugin.debug("Attempting to enter passanger %s to vehicle %s", player.getName(), vehicle.getType());
+    allowedToEnterVehicle = true;
+    vehicle.addPassenger(player);
+    allowedToEnterVehicle = false;
+    RacingPlugin.debug("Result of attempting to enter %s into %s: %b", player.getName(), vehicle.getType(), player.isInsideVehicle());
   }
 
   void exitVehicle() {
-    isAllowedToExitVehicle = true;
-    getVehicle().removePassenger(player);
-    isAllowedToExitVehicle = false;
+    allowedToExitVehicle = true;
+    vehicle.removePassenger(player);
+    allowedToExitVehicle = false;
   }
 
   void restore() {
@@ -398,10 +417,10 @@ public class RacePlayerSession {
     restore = null;
     bossBar.removeAll();
     bossBar = null;
-    if(getVehicle() != null) {
+    if(vehicle != null) {
       RacingPlugin.debug("Attempt to eject %s from vehicle", player.getName());
       exitVehicle();
-      getVehicle().remove();
+      vehicle.remove();
       RacingPlugin.debug("%s ejected from vehicle result: %b", player.getName(), player.getVehicle() == null);
     }
     vehicle = null;

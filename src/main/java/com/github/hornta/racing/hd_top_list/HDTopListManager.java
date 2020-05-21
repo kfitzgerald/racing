@@ -16,6 +16,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -33,7 +35,7 @@ public class HDTopListManager implements Listener {
 
   @EventHandler
   void onRacesLoaded(RacesLoadedEvent event) {
-    storage.load(this.topLists::addAll);
+    storage.load(topLists::addAll);
   }
 
   @EventHandler
@@ -54,12 +56,16 @@ public class HDTopListManager implements Listener {
 
   @EventHandler
   void onDeleteRace(DeleteRaceEvent event) {
-    for(HDTopList topList : topLists) {
-      if(event.getRace() == topList.getRace()) {
-        topList.getHologram().delete();
+    Collection<HDTopList> toRemove = new ArrayList<>();
+    for (HDTopList topList : topLists) {
+      if (event.getRace() == topList.getRace()) {
+        toRemove.add(topList);
       }
     }
-    topLists.removeIf((HDTopList l) -> l.getRace() == event.getRace() && l.getHologram().isDeleted());
+
+    for(HDTopList topList : toRemove) {
+      deleteTopList(topList);
+    }
   }
 
   @EventHandler
@@ -82,16 +88,26 @@ public class HDTopListManager implements Listener {
     });
   }
 
+  private void deleteTopList(HDTopList topList) {
+    deleteTopList(topList, null);
+  }
+
+  private void deleteTopList(HDTopList topList, Consumer<Boolean> callback) {
+    storage.delete(topList, (Boolean result) -> {
+      if(result) {
+        topList.getHologram().delete();
+        topLists.remove(topList);
+      }
+      if(callback != null) {
+        callback.accept(result);
+      }
+    });
+  }
+
   private void deleteTopListInternal(String name, Consumer<Boolean> callback) {
-    for(HDTopList topList : topLists) {
-      if(topList.getName().equals(name)) {
-        storage.delete(topList, (Boolean result) -> {
-          if(result) {
-            topList.getHologram().delete();
-            topLists.remove(topList);
-          }
-          callback.accept(result);
-        });
+    for (HDTopList topList : topLists) {
+      if (topList.getName().equals(name)) {
+        deleteTopList(topList, callback);
         break;
       }
     }

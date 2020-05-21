@@ -14,19 +14,19 @@ import java.util.HashMap;
 public class RaceParticipantReset {
   private static final int PREVENT_SPRINT_FOOD_LEVEL = 6;
 
-  private RacePlayerSession playerSession;
-  private float walkSpeed;
-  private int foodLevel;
-  private ItemStack[] inventory;
-  private Collection<PotionEffect> potionEffects;
-  private double health;
-  private GameMode gameMode;
-  private int fireTicks;
-  private boolean allowFlight;
-  private float exp;
-  private float exhaustion;
-  private int level;
-  private float saturation;
+  private final RacePlayerSession playerSession;
+  private final float walkSpeed;
+  private final int foodLevel;
+  private final ItemStack[] inventory;
+  private final Collection<PotionEffect> potionEffects;
+  private final double health;
+  private final GameMode gameMode;
+  private final int fireTicks;
+  private final boolean allowFlight;
+  private final float exp;
+  private final float exhaustion;
+  private final int level;
+  private final float saturation;
 
   RaceParticipantReset(RacePlayerSession playerSession) {
     this.playerSession = playerSession;
