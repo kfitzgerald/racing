@@ -13,10 +13,12 @@ import com.github.hornta.racing.events.CreateRaceEvent;
 import com.github.hornta.racing.events.DeleteRaceEvent;
 import com.github.hornta.racing.events.DeleteRaceStartPointEvent;
 import com.github.hornta.racing.events.LeaveEvent;
+import com.github.hornta.racing.events.LoadRaceEvent;
 import com.github.hornta.racing.events.ParticipateEvent;
 import com.github.hornta.racing.events.RaceChangeNameEvent;
 import com.github.hornta.racing.events.RaceSessionStopEvent;
 import com.github.hornta.racing.events.SessionStateChangedEvent;
+import com.github.hornta.racing.events.UnloadRaceEvent;
 import com.github.hornta.racing.objects.Race;
 import com.github.hornta.racing.objects.RaceSession;
 import com.github.hornta.racing.objects.RaceSign;
@@ -76,7 +78,7 @@ public class SignManager implements Listener {
   }
 
   @EventHandler
-  void onCreateRace(CreateRaceEvent event) {
+  void onLoadRace(LoadRaceEvent event) {
     for(RaceSign sign : event.getRace().getSigns()) {
       raceSigns.put(sign.getKey(), sign);
       racesBySign.put(sign, event.getRace());
@@ -84,7 +86,7 @@ public class SignManager implements Listener {
   }
 
   @EventHandler
-  void onDeleteRace(DeleteRaceEvent event) {
+  void onUnloadRace(UnloadRaceEvent event) {
     for(RaceSign sign : event.getRace().getSigns()) {
       raceSigns.remove(sign.getKey());
       racesBySign.remove(sign);

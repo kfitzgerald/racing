@@ -62,7 +62,7 @@ public class Race implements Listener {
     Set<RacePotionEffect> potionEffects,
     Set<RaceSign> signs,
     Set<RacePlayerStatistic> results,
-    int minimimRequiredPlayersToStart,
+    int minimimRequiredParticipantsToStart,
     double pigSpeed,
     double horseSpeed,
     double horseJumpStrength,
@@ -83,7 +83,7 @@ public class Race implements Listener {
     this.walkSpeed = walkSpeed;
     this.potionEffects = potionEffects;
     this.signs = signs;
-    this.minimimRequiredParticipantsToStart = minimimRequiredPlayersToStart;
+    this.minimimRequiredParticipantsToStart = minimimRequiredParticipantsToStart;
     this.pigSpeed = pigSpeed;
     this.horseSpeed = horseSpeed;
     this.horseJumpStrength = horseJumpStrength;
@@ -103,7 +103,7 @@ public class Race implements Listener {
             order = (int)(o1.getFastestLap() - o2.getFastestLap());
             break;
           case WIN_RATIO:
-            order = (int)((float)o2.getWins() / o2.getRuns() * 100 - (float)o1.getWins() / o1.getRuns() * 100);
+            order = (int)((float)o2.getWins() / (o2.getRuns() - o2.getSingleRuns()) * 100 - (float)o1.getWins() / (o1.getRuns() - o1.getSingleRuns()) * 100);
             break;
           case RUNS:
             order = o2.getRuns() - o1.getRuns();
@@ -130,14 +130,17 @@ public class Race implements Listener {
   public void addResult(PlayerSessionResult result) {
     RacePlayerStatistic playerStatistic = resultByPlayerId.get(result.getPlayerSession().getPlayerId());
     RacePlayerStatistic newStat;
+    boolean wasSingleRun = result.getPlayerSession().getRaceSession().getNumJoinedParticipants() == 1;
+    boolean wonRace = result.getPosition() == 1;
     if(playerStatistic == null) {
-      Map<Integer, Long> records = new HashMap<Integer, Long>();
+      Map<Integer, Long> records = new HashMap<>();
       records.put(result.getPlayerSession().getCurrentLap(), result.getTime());
       newStat = new RacePlayerStatistic(
         result.getPlayerSession().getPlayerId(),
         result.getPlayerSession().getPlayerName(),
-        result.getPosition() == 1 ? 1 : 0,
+        wonRace && !wasSingleRun ? 1 : 0,
         1,
+        wasSingleRun ? 1 : 0,
         result.getPlayerSession().getFastestLap(),
         records
       );
@@ -145,15 +148,17 @@ public class Race implements Listener {
       newStat = playerStatistic.clone();
       newStat.setPlayerName(result.getPlayerSession().getPlayerName());
       newStat.setRuns(newStat.getRuns() + 1);
-      if (result.getPosition() == 1) {
+      if (wasSingleRun) {
+        newStat.setSingleRuns(newStat.getSingleRuns() + 1);
+      }
+      if (wonRace && !wasSingleRun) {
         newStat.setWins(newStat.getWins() + 1);
       }
       if(newStat.getFastestLap() > result.getPlayerSession().getFastestLap()) {
         newStat.setFastestLap(result.getPlayerSession().getFastestLap());
       }
       int laps = result.getPlayerSession().getCurrentLap();
-      if(newStat.getRecord(laps) > result.getTime())
-      {
+      if(newStat.getRecord(laps) > result.getTime()) {
         newStat.setRecord(laps, result.getTime());
       }
     }

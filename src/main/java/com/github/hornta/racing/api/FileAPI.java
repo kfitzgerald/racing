@@ -13,6 +13,7 @@ import com.github.hornta.racing.api.migrations.ResultsMigrationRace;
 import com.github.hornta.racing.api.migrations.SignLapsMigrationRace;
 import com.github.hornta.racing.api.migrations.SignTypeMigrationRace;
 import com.github.hornta.racing.api.migrations.SignsMigrationRace;
+import com.github.hornta.racing.api.migrations.SingleRuns;
 import com.github.hornta.racing.api.migrations.StartOrderMigrationRace;
 import com.github.hornta.racing.api.migrations.WalkSpeedMigrationRace;
 import com.github.hornta.racing.enums.RaceCommandType;
@@ -87,7 +88,8 @@ public class FileAPI implements RacingAPI {
   private static final String RESULTS_FIELD_PLAYER_ID = "player_id";
   private static final String RESULTS_FIELD_PLAYER_NAME = "name";
   private static final String RESULTS_FIELD_WINS = "wins";
-  private static final String RESULTS_FIELD_RUNS = "runs";
+  public static final String RESULTS_FIELD_RUNS = "runs";
+  public static final String RESULTS_FIELD_SINGLE_RUNS = "single_runs";
   public static final String RESULTS_FIELD_DURATION = "duration";
   public static final String RESULTS_FIELD_FASTEST_LAP = "fastestLap";
   public static final String RESULTS_FIELD_RECORDS = "records";
@@ -116,6 +118,7 @@ public class FileAPI implements RacingAPI {
     migrationManager.addMigration(new RaceDurationMigrationRace());
     migrationManager.addMigration(new StartOrderMigrationRace());
     migrationManager.addMigration(new SignTypeMigrationRace());
+    migrationManager.addMigration(new SingleRuns());
   }
 
   @Override
@@ -353,8 +356,10 @@ public class FileAPI implements RacingAPI {
       throw new ParseRaceException("`" + ID_FIELD + "` is missing from race");
     }
 
-    RaceVersion version = RaceVersion.fromString(yaml.getString("version"));
-    if(version == null) {
+    RaceVersion version;
+    try {
+      version = RaceVersion.fromString(yaml.getString("version"));
+    } catch (IllegalArgumentException ex) {
       throw new ParseRaceException("`" + VERSION_FIELD + "` is missing from race");
     }
 
@@ -600,10 +605,10 @@ public class FileAPI implements RacingAPI {
     }
   }
 
-  private Set<RacePlayerStatistic> parseResults(YamlConfiguration yaml) {
+  public static Set<RacePlayerStatistic> parseResults(YamlConfiguration yaml) {
     Set<RacePlayerStatistic> results = new HashSet<>();
     @SuppressWarnings("unchecked")
-    List<Map<String, Object>> entries = (List<Map<String, Object>>)yaml.getList(RESULTS_FIELD);
+    Iterable<Map<String, Object>> entries = (Iterable<Map<String, Object>>) yaml.getList(RESULTS_FIELD);
     if(entries == null) {
       throw new ParseRaceException("Couldn't parse `" + RESULTS_FIELD + "` list");
     }
@@ -622,25 +627,27 @@ public class FileAPI implements RacingAPI {
       }
 
       int runs = (int) entry.get(RESULTS_FIELD_RUNS);
+      int singleRuns = (int) entry.get(RESULTS_FIELD_SINGLE_RUNS);
       int wins = (int) entry.get(RESULTS_FIELD_WINS);
       long fastestLap = (int) entry.get(RESULTS_FIELD_FASTEST_LAP);
       @SuppressWarnings("unchecked")
       Map<Integer, Long> records = (Map<Integer, Long>) entry.get(RESULTS_FIELD_RECORDS);
 
-      results.add(new RacePlayerStatistic(playerId, playerName, wins, runs, fastestLap, records));
+      results.add(new RacePlayerStatistic(playerId, playerName, wins, runs, singleRuns, fastestLap, records));
     }
 
     return results;
   }
 
-  private void writeResults(Collection<RacePlayerStatistic> results, YamlConfiguration yaml) {
-    List<Map<String, Object>> writeList = new ArrayList<>();
+  public static void writeResults(Iterable<RacePlayerStatistic> results, ConfigurationSection yaml) {
+    Collection<Map<String, Object>> writeList = new ArrayList<>();
 
     for(RacePlayerStatistic entry : results) {
       Map<String, Object> writeObject = new LinkedHashMap<>();
       writeObject.put(RESULTS_FIELD_PLAYER_ID, entry.getPlayerId().toString());
       writeObject.put(RESULTS_FIELD_PLAYER_NAME, entry.getPlayerName());
       writeObject.put(RESULTS_FIELD_RUNS, entry.getRuns());
+      writeObject.put(RESULTS_FIELD_SINGLE_RUNS, entry.getSingleRuns());
       writeObject.put(RESULTS_FIELD_WINS, entry.getWins());
       writeObject.put(RESULTS_FIELD_FASTEST_LAP, entry.getFastestLap());
       writeObject.put(RESULTS_FIELD_RECORDS, entry.getRecords());

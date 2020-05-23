@@ -16,8 +16,10 @@ import com.github.hornta.racing.events.DeleteRaceCheckpointEvent;
 import com.github.hornta.racing.events.DeleteRaceEvent;
 import com.github.hornta.racing.events.DeleteRaceStartPointEvent;
 import com.github.hornta.racing.events.ExecuteCommandEvent;
+import com.github.hornta.racing.events.LoadRaceEvent;
 import com.github.hornta.racing.events.RaceChangeNameEvent;
 import com.github.hornta.racing.events.RaceChangeStateEvent;
+import com.github.hornta.racing.events.RaceEvent;
 import com.github.hornta.racing.events.RacePlayerGoalEvent;
 import com.github.hornta.racing.events.RaceResultUpdatedEvent;
 import com.github.hornta.racing.events.RaceSessionResultEvent;
@@ -25,6 +27,7 @@ import com.github.hornta.racing.events.RaceSessionStartEvent;
 import com.github.hornta.racing.events.RaceSessionStopEvent;
 import com.github.hornta.racing.events.RacesLoadedEvent;
 import com.github.hornta.racing.events.SessionStateChangedEvent;
+import com.github.hornta.racing.events.UnloadRaceEvent;
 import com.github.hornta.racing.features.AllowTeleport;
 import com.github.hornta.racing.features.DamageParticipants;
 import com.github.hornta.racing.features.FoodLevel;
@@ -126,7 +129,7 @@ public class RacingManager implements Listener {
   }
 
   @EventHandler
-  void onCreateRace(CreateRaceEvent event) {
+  void onLoadRace(LoadRaceEvent event) {
     if (event.getRace().getState() != RaceState.UNDER_CONSTRUCTION) {
       return;
     }
@@ -144,7 +147,7 @@ public class RacingManager implements Listener {
   }
 
   @EventHandler
-  void onDeleteRace(DeleteRaceEvent event) {
+  void onUnloadRace(UnloadRaceEvent event) {
     for (RaceCheckpoint checkpoint : event.getRace().getCheckpoints()) {
       checkpoint.stopTask();
       checkpoint.removeHologram();
@@ -398,7 +401,7 @@ public class RacingManager implements Listener {
     }
 
     for (Race race : races) {
-      Bukkit.getPluginManager().callEvent(new DeleteRaceEvent(race));
+      Bukkit.getPluginManager().callEvent(new UnloadRaceEvent(race));
     }
     racesByName.clear();
     racesById.clear();
@@ -409,7 +412,7 @@ public class RacingManager implements Listener {
         racesByName.put(race.getName(), race);
         racesById.put(race.getId(), race);
         races.add(race);
-        Bukkit.getPluginManager().callEvent(new CreateRaceEvent(race));
+        Bukkit.getPluginManager().callEvent(new LoadRaceEvent(race));
       }
       Bukkit.getPluginManager().callEvent(new RacesLoadedEvent());
     });
@@ -460,6 +463,7 @@ public class RacingManager implements Listener {
         racesById.put(race.getId(), race);
         races.add(race);
         Bukkit.getPluginManager().callEvent(new CreateRaceEvent(race));
+        Bukkit.getPluginManager().callEvent(new LoadRaceEvent(race));
         callback.run();
       }
     }));
@@ -472,6 +476,7 @@ public class RacingManager implements Listener {
         racesById.remove(race.getId());
         races.remove(race);
         Bukkit.getPluginManager().callEvent(new DeleteRaceEvent(race));
+        Bukkit.getPluginManager().callEvent(new UnloadRaceEvent(race));
         runnable.run();
       }
     }));

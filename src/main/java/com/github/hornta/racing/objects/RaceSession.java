@@ -44,9 +44,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -87,20 +85,23 @@ public class RaceSession implements Listener {
   private long start;
   private int numFinished;
   private RaceSessionResult result;
+  private int numJoinedParticipants;
 
   public RaceSession(CommandSender initiator, Race race, int laps) {
-    this.id = UUID.randomUUID();
+    id = UUID.randomUUID();
     this.initiator = initiator;
     this.race = race;
     this.laps = laps;
-    this.startTimerTasks = new ArrayList<>();
-    this.playerSessions = new LinkedHashMap<>();
-    this.scoreboardManager = new ScoreboardManager();
+    startTimerTasks = new ArrayList<>();
+    playerSessions = new LinkedHashMap<>();
+    scoreboardManager = new ScoreboardManager();
     Bukkit.getPluginManager().registerEvents(scoreboardManager, RacingPlugin.getInstance());
 
     if(RacingPlugin.getInstance().isNoteBlockAPILoaded() && race.getSong() != null) {
-      this.songPlayer = new RadioSongPlayer(SongManager.getSongByName(race.getSong()));
+      songPlayer = new RadioSongPlayer(SongManager.getSongByName(race.getSong()));
     }
+
+    numJoinedParticipants = 0;
   }
 
   public int getLaps() {
@@ -543,6 +544,7 @@ public class RaceSession implements Listener {
   public void participate(Player player, double chargedEntryFee) {
     RacePlayerSession session = new RacePlayerSession(this, player, chargedEntryFee);
     playerSessions.put(player.getUniqueId(), session);
+    numJoinedParticipants += 1;
     Bukkit.getPluginManager().callEvent(new ParticipateEvent(this, session));
     tryAndSkipToCountdown();
   }
@@ -1012,5 +1014,9 @@ public class RaceSession implements Listener {
 
   public RaceSessionResult getResult() {
     return result;
+  }
+
+  public int getNumJoinedParticipants() {
+    return numJoinedParticipants;
   }
 }

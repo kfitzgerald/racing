@@ -11,20 +11,22 @@ public class RacePlayerStatistic {
   private String playerName;
   private int wins;
   private int runs;
+  private int singleRuns;
   private long fastestLap;
   private final Map<Integer, Long> records;
 
-  public RacePlayerStatistic(UUID playerId, String playerName, int wins, int runs, long fastestLap, Map<Integer, Long> records) {
+  public RacePlayerStatistic(UUID playerId, String playerName, int wins, int runs, int singleRuns, long fastestLap, Map<Integer, Long> records) {
     this.playerId = playerId;
     this.playerName = playerName;
     this.wins = wins;
     this.runs = runs;
+    this.singleRuns = singleRuns;
     this.fastestLap = fastestLap;
     this.records = records;
   }
 
   public RacePlayerStatistic clone() {
-    return new RacePlayerStatistic(playerId, playerName, wins, runs, fastestLap, records);
+    return new RacePlayerStatistic(playerId, playerName, wins, runs, singleRuns, fastestLap, records);
   }
 
   public UUID getPlayerId() {
@@ -43,18 +45,18 @@ public class RacePlayerStatistic {
     return runs;
   }
 
+  public int getSingleRuns() {
+    return singleRuns;
+  }
+
   public int getWins() {
     return wins;
   }
 
-  public long getRecord(int laps)
-  {
-    if(records.containsKey(laps))
-    {
+  public long getRecord(int laps) {
+    if(records.containsKey(laps)) {
       return ((Number)records.get(laps)).longValue();
-    }
-    else
-    {
+    } else {
       return Long.MAX_VALUE;
     }
   }
@@ -70,6 +72,10 @@ public class RacePlayerStatistic {
 
   public void setRuns(int runs) {
     this.runs = runs;
+  }
+
+  public void setSingleRuns(int singleRuns) {
+    this.singleRuns = singleRuns;
   }
 
   public void setFastestLap(long time) {

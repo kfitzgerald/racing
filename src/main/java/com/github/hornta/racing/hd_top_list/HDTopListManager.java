@@ -7,6 +7,7 @@ import com.github.hornta.racing.events.DeleteRaceEvent;
 import com.github.hornta.racing.events.RaceChangeNameEvent;
 import com.github.hornta.racing.events.RaceResultUpdatedEvent;
 import com.github.hornta.racing.events.RacesLoadedEvent;
+import com.github.hornta.racing.events.UnloadRaceEvent;
 import com.github.hornta.racing.objects.Race;
 import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
@@ -66,6 +67,17 @@ public class HDTopListManager implements Listener {
     for(HDTopList topList : toRemove) {
       deleteTopList(topList);
     }
+  }
+
+  @EventHandler
+  void onUnloadRace(UnloadRaceEvent event) {
+    for (HDTopList topList : topLists) {
+      if (event.getRace() == topList.getRace()) {
+        topList.getHologram().delete();
+      }
+    }
+
+    topLists.removeIf((HDTopList l) -> l.getHologram().isDeleted());
   }
 
   @EventHandler
