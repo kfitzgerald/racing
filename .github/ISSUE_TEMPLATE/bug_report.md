@@ -32,6 +32,12 @@ Steps to reproduce the behavior:
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
+**Is the bug caused by another plugin?**
+<!--
+If you are using many plugins on your server it's not impossible for some plugins to cause issues with Racing. You can help me by figuring out if another plugin is causing the bug. To test this, make sure you only are using the dependencies: https://github.com/TrollskogenMC/racing/wiki/Dependencies
+-->
+Example: Yes, Worldguard version 7.0.3
+
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
