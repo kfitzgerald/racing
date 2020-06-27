@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: "[BUG]"
+title: "[BUG] ..."
 labels: ''
 assignees: ''
 
@@ -13,7 +13,8 @@ Example: 2.4.0
 **Server software including version**
 Example: Paper 1.15#372 (https://papermc.io/api/v1/paper/1.15.2/372/download)
 
-**[ProtocolLib version][https://www.spigotmc.org/resources/protocollib.1997/)**
+**ProtocolLib version**
+Example: 4.5.1
 
 **Java version**
 Example: Java 8
