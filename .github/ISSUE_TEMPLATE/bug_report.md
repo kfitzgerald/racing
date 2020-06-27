@@ -7,13 +7,13 @@ assignees: ''
 
 ---
 
-** Version of Racing **
+**Racing version**
 Example: 2.4.0
 
-** Server software including version **
-Example: Paper 1.15#371 https://papermc.io/api/v1/paper/1.15.2/372/download
+**Server software including version**
+Example: Paper 1.15#372 (https://papermc.io/api/v1/paper/1.15.2/372/download)
 
-** (ProtocolLib version)[https://www.spigotmc.org/resources/protocollib.1997/] **
+**(ProtocolLib version)[https://www.spigotmc.org/resources/protocollib.1997/]**
 
 **Java version**
 Example: Java 8
