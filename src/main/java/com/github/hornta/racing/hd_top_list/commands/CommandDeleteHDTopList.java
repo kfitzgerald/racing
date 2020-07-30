@@ -1,7 +1,7 @@
 package com.github.hornta.racing.hd_top_list.commands;
 
-import com.github.hornta.commando.ICommandHandler;
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.commando.ICommandHandler;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.MessageKey;
 import com.github.hornta.racing.hd_top_list.HDTopListManager;
 import org.bukkit.command.CommandSender;

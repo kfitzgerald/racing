@@ -1,16 +1,16 @@
 package com.github.hornta.racing.commands;
 
-import com.github.hornta.commando.ICommandHandler;
+import se.hornta.commando.ICommandHandler;
 import com.github.hornta.racing.enums.Permission;
 import com.github.hornta.racing.RacingManager;
 import com.github.hornta.racing.Util;
 import com.github.hornta.racing.enums.RaceState;
 import com.github.hornta.racing.MessageKey;
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.objects.Race;
 import io.papermc.lib.PaperLib;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
 public class CommandRaceSpawn extends RacingCommand implements ICommandHandler {
@@ -27,6 +27,6 @@ public class CommandRaceSpawn extends RacingCommand implements ICommandHandler {
       return;
     }
 
-    PaperLib.teleportAsync(((Player)commandSender), Util.snapAngles(race.getSpawn()), PlayerTeleportEvent.TeleportCause.COMMAND);
+    PaperLib.teleportAsync(((Entity) commandSender), Util.snapAngles(race.getSpawn()), PlayerTeleportEvent.TeleportCause.COMMAND);
   }
 }

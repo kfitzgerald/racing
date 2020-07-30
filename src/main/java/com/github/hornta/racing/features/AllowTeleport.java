@@ -2,7 +2,6 @@ package com.github.hornta.racing.features;
 
 import com.github.hornta.racing.ConfigKey;
 import com.github.hornta.racing.RacingPlugin;
-import com.github.hornta.racing.enums.RaceSessionState;
 import com.github.hornta.racing.objects.RaceSession;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

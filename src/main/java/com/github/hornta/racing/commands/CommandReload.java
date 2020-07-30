@@ -1,16 +1,15 @@
 package com.github.hornta.racing.commands;
 
-import com.github.hornta.commando.ICommandHandler;
-import com.github.hornta.messenger.MessengerException;
-import com.github.hornta.messenger.Translation;
+import se.hornta.commando.ICommandHandler;
+import se.hornta.messenger.MessengerException;
+import se.hornta.messenger.Translation;
 import com.github.hornta.racing.ConfigKey;
 import com.github.hornta.racing.RacingPlugin;
 import com.github.hornta.racing.api.ParseRaceException;
 import com.github.hornta.racing.events.ConfigReloadedEvent;
 import com.github.hornta.racing.MessageKey;
-import com.github.hornta.messenger.MessageManager;
-import com.github.hornta.racing.hd_top_list.HDTopListManager;
-import com.github.hornta.versioned_config.ConfigurationException;
+import se.hornta.messenger.MessageManager;
+import se.hornta.versioned_config.ConfigurationException;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 

@@ -1,10 +1,10 @@
 package com.github.hornta.racing.commands.argumentHandlers;
 
-import com.github.hornta.commando.ValidationResult;
-import com.github.hornta.commando.completers.IArgumentHandler;
+import se.hornta.commando.ValidationResult;
+import se.hornta.commando.completers.IArgumentHandler;
 import com.github.hornta.racing.RacingManager;
 import com.github.hornta.racing.MessageKey;
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 import org.bukkit.command.CommandSender;
 
 import java.util.LinkedHashSet;
@@ -13,8 +13,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class StartPointArgumentHandler implements IArgumentHandler {
-  private RacingManager racingManager;
-  private boolean shouldExist;
+  private final RacingManager racingManager;
+  private final boolean shouldExist;
 
   public StartPointArgumentHandler(RacingManager racingManager, boolean shouldExist) {
     this.racingManager = racingManager;
@@ -41,7 +41,7 @@ public class StartPointArgumentHandler implements IArgumentHandler {
   @Override
   public void whenInvalid(ValidationResult result) {
     MessageKey key;
-    if(this.shouldExist) {
+    if(shouldExist) {
       key = MessageKey.STARTPOINT_NOT_FOUND;
     } else {
       key = MessageKey.STARTPOINT_ALREADY_EXIST;

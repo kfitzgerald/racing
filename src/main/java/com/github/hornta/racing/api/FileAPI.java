@@ -15,6 +15,7 @@ import com.github.hornta.racing.api.migrations.SignTypeMigrationRace;
 import com.github.hornta.racing.api.migrations.SignsMigrationRace;
 import com.github.hornta.racing.api.migrations.SingleRuns;
 import com.github.hornta.racing.api.migrations.StartOrderMigrationRace;
+import com.github.hornta.racing.api.migrations.StriderSpeedMigrationRace;
 import com.github.hornta.racing.api.migrations.WalkSpeedMigrationRace;
 import com.github.hornta.racing.enums.RaceCommandType;
 import com.github.hornta.racing.enums.RaceSignType;
@@ -62,7 +63,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 public class FileAPI implements RacingAPI {
   private static final String ID_FIELD = "id";
@@ -95,6 +95,7 @@ public class FileAPI implements RacingAPI {
   public static final String RESULTS_FIELD_RECORDS = "records";
   private static final String MINIMUM_REQUIRED_PARTICIPANTS_TO_START = "min_required_participants_to_start";
   private static final String PIG_SPEED_FIELD = "pig_speed";
+  private static final String STRIDER_SPEED_FIELD = "strider_speed";
   private static final String HORSE_SPEED_FIELD = "horse_speed";
   private static final String HORSE_JUMP_STRENGTH_FIELD = "horse_jump_strength";
   public static final String COMMANDS_FIELD = "commands";
@@ -119,6 +120,7 @@ public class FileAPI implements RacingAPI {
     migrationManager.addMigration(new StartOrderMigrationRace());
     migrationManager.addMigration(new SignTypeMigrationRace());
     migrationManager.addMigration(new SingleRuns());
+    migrationManager.addMigration(new StriderSpeedMigrationRace());
   }
 
   @Override
@@ -215,6 +217,7 @@ public class FileAPI implements RacingAPI {
       writeResults(race.getResultByPlayerId().values(), yaml);
       yaml.set(MINIMUM_REQUIRED_PARTICIPANTS_TO_START, race.getMinimimRequiredParticipantsToStart());
       yaml.set(PIG_SPEED_FIELD, race.getPigSpeed());
+      yaml.set(STRIDER_SPEED_FIELD, race.getStriderSpeed());
       yaml.set(HORSE_SPEED_FIELD, race.getHorseSpeed());
       yaml.set(HORSE_JUMP_STRENGTH_FIELD, race.getHorseJumpStrength());
       writeCommands(race.getCommands(), yaml);
@@ -232,23 +235,12 @@ public class FileAPI implements RacingAPI {
   }
 
   @Override
-  public void addCheckpoint(UUID raceId, RaceCheckpoint checkpoint, Consumer<Boolean> callback) {
+  public void updateCheckpoints(UUID raceId, List<RaceCheckpoint> checkpoints, Consumer<Boolean> callback) {
     File raceFile = new File(directory, raceId + ".yml");
 
     CompletableFuture.supplyAsync(() -> {
       YamlConfiguration yaml = YamlConfiguration.loadConfiguration(raceFile);
-
-      List<RaceCheckpoint> checkpoints = parseCheckpoints(yaml);
-
-      boolean hasPosition = checkpoints.stream().anyMatch((RaceCheckpoint p) -> p.getPosition() == checkpoint.getPosition());
-
-      if(hasPosition) {
-        return false;
-      }
-
-      checkpoints.add(checkpoint);
       writeCheckpoints(checkpoints, yaml);
-
       try {
         yaml.save(raceFile);
       } catch (IOException ex) {
@@ -261,53 +253,12 @@ public class FileAPI implements RacingAPI {
   }
 
   @Override
-  public void deleteCheckpoint(UUID raceId, RaceCheckpoint checkpoint, Consumer<Boolean> callback) {
+  public void updateStartPoints(UUID raceId, List<RaceStartPoint> startPoints, Consumer<Boolean> callback) {
     File raceFile = new File(directory, raceId + ".yml");
 
     CompletableFuture.supplyAsync(() -> {
       YamlConfiguration yaml = YamlConfiguration.loadConfiguration(raceFile);
-
-      List<RaceCheckpoint> checkpoints = parseCheckpoints(yaml)
-        .stream()
-        .filter((RaceCheckpoint point) -> !point.getId().equals(checkpoint.getId()))
-        .peek((RaceCheckpoint point) -> {
-          if(point.getPosition() > checkpoint.getPosition()) {
-            point.setPosition(point.getPosition() - 1);
-          }
-        })
-        .collect(Collectors.toList());
-
-      writeCheckpoints(checkpoints, yaml);
-
-      try {
-        yaml.save(raceFile);
-      } catch (IOException ex) {
-        RacingPlugin.logger().log(Level.SEVERE, ex.getMessage(), ex);
-        return false;
-      }
-
-      return true;
-    }).thenAccept(callback);
-  }
-
-  @Override
-  public void addStartPoint(UUID raceId, RaceStartPoint startPoint, Consumer<Boolean> callback) {
-    File raceFile = new File(directory, raceId + ".yml");
-
-    CompletableFuture.supplyAsync(() -> {
-      YamlConfiguration yaml = YamlConfiguration.loadConfiguration(raceFile);
-
-      List<RaceStartPoint> startPoints = parseStartPoints(yaml);
-
-      boolean hasPosition = startPoints.stream().anyMatch((RaceStartPoint p) -> p.getPosition() == startPoint.getPosition());
-
-      if(hasPosition) {
-        return false;
-      }
-
-      startPoints.add(startPoint);
       writeStartPoints(startPoints, yaml);
-
       try {
         yaml.save(raceFile);
       } catch (IOException ex) {
@@ -317,36 +268,6 @@ public class FileAPI implements RacingAPI {
 
       return true;
     }, fileService).thenAccept(callback);
-  }
-
-  @Override
-  public void deleteStartPoint(UUID raceId, RaceStartPoint startPoint, Consumer<Boolean> callback) {
-    File raceFile = new File(directory, raceId + ".yml");
-
-    CompletableFuture.supplyAsync(() -> {
-      YamlConfiguration yaml = YamlConfiguration.loadConfiguration(raceFile);
-
-      List<RaceStartPoint> filteredStartPoints = parseStartPoints(yaml)
-        .stream()
-        .filter((RaceStartPoint point) -> !point.getId().equals(startPoint.getId()))
-        .peek((RaceStartPoint point) -> {
-          if(point.getPosition() > startPoint.getPosition()) {
-            point.setPosition(point.getPosition() - 1);
-          }
-        })
-        .collect(Collectors.toList());
-
-      writeStartPoints(filteredStartPoints, yaml);
-
-      try {
-        yaml.save(raceFile);
-      } catch (IOException ex) {
-        RacingPlugin.logger().log(Level.SEVERE, ex.getMessage(), ex);
-        return false;
-      }
-
-      return true;
-    }).thenAccept(callback);
   }
 
   private Race parseRace(YamlConfiguration yaml) throws ParseRaceException {
@@ -451,6 +372,13 @@ public class FileAPI implements RacingAPI {
       pigSpeed = yaml.getInt(PIG_SPEED_FIELD);
     }
 
+    double striderSpeed;
+    if(yaml.isDouble(STRIDER_SPEED_FIELD)) {
+      striderSpeed = yaml.getDouble(STRIDER_SPEED_FIELD);
+    } else {
+      striderSpeed = yaml.getInt(STRIDER_SPEED_FIELD);
+    }
+
     double horseSpeed;
     if(yaml.isDouble(HORSE_SPEED_FIELD)) {
       horseSpeed = yaml.getDouble(HORSE_SPEED_FIELD);
@@ -484,6 +412,7 @@ public class FileAPI implements RacingAPI {
       results,
       minimumRequiredParticipantsToStart,
       pigSpeed,
+      striderSpeed,
       horseSpeed,
       horseJumpStrength,
       parseCommands(yaml)
@@ -741,7 +670,7 @@ public class FileAPI implements RacingAPI {
 
         laps = (int) entry.get("laps");
       }
-      RaceSignType type = RaceSignType.JOIN;
+      RaceSignType type;
       try {
         type = RaceSignType.fromString((String)entry.get("type"));
       } catch (IllegalArgumentException ex) {
@@ -831,7 +760,7 @@ public class FileAPI implements RacingAPI {
   private List<RaceCommand> parseCommands(YamlConfiguration yaml) {
     List<RaceCommand> commands = new ArrayList<>();
     @SuppressWarnings("unchecked")
-    List<Map<String, Object>> entries = (List<Map<String, Object>>)yaml.getList("commands");
+    Iterable<Map<String, Object>> entries = (Iterable<Map<String, Object>>) yaml.getList(COMMANDS_FIELD);
     if(entries == null) {
       throw new ParseRaceException("Couldn't parse `commands`");
     }

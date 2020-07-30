@@ -1,6 +1,6 @@
 package com.github.hornta.racing.commands;
 
-import com.github.hornta.commando.ICommandHandler;
+import se.hornta.commando.ICommandHandler;
 import com.github.hornta.racing.RacingManager;
 import com.github.hornta.racing.objects.RaceCheckpoint;
 import io.papermc.lib.PaperLib;

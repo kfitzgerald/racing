@@ -35,17 +35,4 @@ public abstract class AbstractPacket {
 			throw new RuntimeException("Cannot send packet.", e);
 		}
 	}
-
-	public void broadcastPacket() {
-		ProtocolLibrary.getProtocolManager().broadcastServerPacket(getHandle());
-	}
-
-	public void receivePacket(Player sender) {
-		try {
-			ProtocolLibrary.getProtocolManager().recieveClientPacket(sender,
-					getHandle());
-		} catch (Exception e) {
-			throw new RuntimeException("Cannot receive packet.", e);
-		}
-	}
 }

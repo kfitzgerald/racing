@@ -9,13 +9,23 @@ commands:
   race_add_checkpoint:
     success: §e已为竞赛`<race_name>`创建新的记录点 `<position>` .
     error_is_occupied: §c这个位置已经有记录点了.
+    error_position_out_of_bounds: "§cMax position you can enter for this checkpoint is <max>."
   race_delete_checkpoint:
     success: §e已删除竞赛 `<race_name>`的记录点`<position>`.
+  race_move_checkpoint:
+    success: "§eCheckpoint `<position>` for race `<race_name>` was moved to <x>, <y>, <z> in world `<world>`."
+    error_no_change: "§eCheckpoint `<position>` is already in this location."
+    error_occupied: "§cThere is already a checkpoint in this location."
   race_add_startpoint:
     success: §e已为竞赛`<race_name>`创建新的起点 `<position>`.
     error_is_occupied: §c这个位置已经有起点了.
+    error_position_out_of_bounds: "§cMax position you can enter for this start point is <max>."
   race_delete_startpoint:
     success: §e已删除竞赛 `<race_name>`的起点`<position>`.
+  race_move_startpoint:
+    success: "§Start point `<position>` for race `<race_name>` was moved to <x>, <y>, <z> in world `<world>`."
+    error_no_change: "§Start point `<position>` is already in this location."
+    error_occupied: "§cThere is already a start point in this location."
   race_spawn:
     error_not_enabled: §c这个竞赛暂未开放.
   race_set_spawn:
@@ -82,6 +92,8 @@ commands:
     success: §e行走速度已设置为<walk_speed>.
   race_set_pig_speed:
     success: "§ePig speed has been set to <speed>."
+  race_set_strider_speed:
+    success: "§eStrider speed has been set to <speed>."
   race_set_horse_speed:
     success: "§eHorse speed has been set to <speed>."
   race_set_horse_jump_strength:

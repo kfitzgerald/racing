@@ -1,6 +1,6 @@
 package com.github.hornta.racing;
 
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.objects.DurationUnit;
 
 import org.bukkit.Location;

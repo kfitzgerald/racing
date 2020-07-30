@@ -99,6 +99,7 @@ public class RaceParticipantReset {
       case HORSE:
       case BOAT:
       case PIG:
+      case STRIDER:
       case MINECART:
         playerSession.getPlayer().setAllowFlight(true);
         break;

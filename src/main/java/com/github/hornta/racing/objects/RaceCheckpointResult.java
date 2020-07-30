@@ -3,9 +3,9 @@ package com.github.hornta.racing.objects;
 import org.bukkit.Location;
 
 public class RaceCheckpointResult {
-  private RaceCheckpoint checkpoint;
-  private int ticks;
-  private Location location;
+  private final RaceCheckpoint checkpoint;
+  private final int ticks;
+  private final Location location;
 
   public RaceCheckpointResult(RaceCheckpoint checkpoint, int ticks, Location location) {
     this.checkpoint = checkpoint;

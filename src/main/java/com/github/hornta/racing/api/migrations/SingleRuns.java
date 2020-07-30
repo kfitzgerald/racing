@@ -3,13 +3,10 @@ package com.github.hornta.racing.api.migrations;
 import com.github.hornta.racing.api.FileAPI;
 import com.github.hornta.racing.api.IRaceFileMigration;
 import com.github.hornta.racing.enums.RaceVersion;
-import com.github.hornta.racing.objects.RacePlayerStatistic;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 public class SingleRuns implements IRaceFileMigration {
   @Override

@@ -10,7 +10,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.spigotmc:spigot:1.15.2-R0.1-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.spigotmc:spigot:1.16.1-R0.1-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.github.koca2000:NoteBlockAPI:1.5.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.gmail.nossr50.mcMMO:mcMMO:2.1.70" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.maven.scm:maven-scm-provider-gitexe:1.8.1" level="project" />
@@ -43,11 +43,11 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.google.guava:guava:21.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.google.code.gson:gson:2.8.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.yaml:snakeyaml:1.21" level="project" />
-    <orderEntry type="library" name="Maven: com.github.hornta:versioned-config:1.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" name="Maven: com.github.hornta:messenger:1.0-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: se.hornta:versioned-config:1.0-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: se.hornta:messenger:1.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: org.reflections:reflections:0.9.12" level="project" />
     <orderEntry type="library" name="Maven: org.javassist:javassist:3.26.0-GA" level="project" />
-    <orderEntry type="library" name="Maven: com.github.hornta:commando:1.0-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: se.hornta:commando:1.0-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.gmail.filoghost.holographicdisplays:holographicdisplays-api:2.3.3-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.comphenix.protocol:ProtocolLib:4.5.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: cglib:cglib-nodep:3.2.5" level="project" />
@@ -63,6 +63,6 @@
     <orderEntry type="library" scope="RUNTIME" name="Maven: org.json:json:20160810" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: net.sf.trove4j:trove4j:3.0.3" level="project" />
     <orderEntry type="library" name="Maven: org.bstats:bstats-bukkit:1.7" level="project" />
-    <orderEntry type="library" name="Maven: io.papermc:paperlib:1.0.2" level="project" />
+    <orderEntry type="library" name="Maven: io.papermc:paperlib:1.0.4" level="project" />
   </component>
 </module>

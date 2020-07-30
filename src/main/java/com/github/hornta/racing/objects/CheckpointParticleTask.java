@@ -28,8 +28,8 @@ public class CheckpointParticleTask extends BukkitRunnable {
     this.checkpoint = checkpoint;
     this.isEditing = isEditing;
     this.isLast = isLast;
-    this.defaultColor = new RGB(255, 0, 0);
-    this.isInsideColor = new RGB(0, 255, 0);
+    defaultColor = new RGB(255, 0, 0);
+    isInsideColor = new RGB(0, 255, 0);
   }
 
   @Override

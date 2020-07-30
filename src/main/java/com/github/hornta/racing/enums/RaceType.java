@@ -6,6 +6,7 @@ public enum RaceType {
   PIG,
   ELYTRA,
   BOAT,
+  STRIDER,
   MINECART;
 
   public static RaceType fromString(String string) {

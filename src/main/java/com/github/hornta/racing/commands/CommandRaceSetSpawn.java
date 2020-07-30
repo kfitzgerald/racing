@@ -1,14 +1,14 @@
 package com.github.hornta.racing.commands;
 
-import com.github.hornta.commando.ICommandHandler;
+import se.hornta.commando.ICommandHandler;
 import com.github.hornta.racing.RacingManager;
 import com.github.hornta.racing.Util;
 import com.github.hornta.racing.enums.RaceState;
 import com.github.hornta.racing.MessageKey;
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.objects.Race;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 
 public class CommandRaceSetSpawn extends RacingCommand implements ICommandHandler {
   public CommandRaceSetSpawn(RacingManager racingManager) {
@@ -25,7 +25,7 @@ public class CommandRaceSetSpawn extends RacingCommand implements ICommandHandle
       return;
     }
 
-    race.setSpawn(Util.centerOnBlockHorizontally(((Player) commandSender).getLocation()));
+    race.setSpawn(Util.centerOnBlockHorizontally(((Entity) commandSender).getLocation()));
 
     racingManager.updateRace(race, () -> {
       MessageManager.setValue("race_name", race.getName());

@@ -12,7 +12,7 @@ public class RaceMigrationManager {
 
   public void addMigration(IRaceFileMigration migration) {
 
-    if(migration.from().equals(migration.to())) {
+    if(migration.from() == migration.to()) {
       throw new IllegalArgumentException("Migration from() and to() must return different values");
     }
 
@@ -21,10 +21,10 @@ public class RaceMigrationManager {
     }
 
     for (IRaceFileMigration iRaceFileMigration : migrations) {
-      if (iRaceFileMigration.from().equals(migration.from())) {
+      if (iRaceFileMigration.from() == migration.from()) {
         throw new IllegalArgumentException("There is already a migration with the same from()");
       }
-      if (iRaceFileMigration.to().equals(migration.to())) {
+      if (iRaceFileMigration.to() == migration.to()) {
         throw new IllegalArgumentException("There is already a migration with the same to()");
       }
     }
@@ -53,7 +53,7 @@ public class RaceMigrationManager {
 
     for(IRaceFileMigration migration : migrations) {
       RaceVersion fromVersion = RaceVersion.fromString(yaml.getString("version"));
-      if(migration.from().equals(fromVersion)) {
+      if(migration.from() == fromVersion) {
         migration.migrate(yaml);
         yaml.set("version", migration.to().toString());
         RacingPlugin.logger().info("Migrate race from version " + fromVersion.toString() + " to " + migration.to().toString());

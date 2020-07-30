@@ -2,7 +2,7 @@ package com.github.hornta.racing.objects;
 
 import com.github.hornta.racing.enums.RaceCommandType;
 import com.github.hornta.racing.events.ExecuteCommandEvent;
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,9 +15,7 @@ public class RaceCommandExecutor implements Listener {
   @EventHandler
   void onExecuteCommand(ExecuteCommandEvent event) {
     Race race = event.getRaceSession().getRace();
-    List<RaceCommand> commands = race.getCommands().stream().filter((RaceCommand command) -> {
-      return command.isEnabled() && command.getCommandType() == event.getCommandType();
-    }).collect(Collectors.toList());
+    List<RaceCommand> commands = race.getCommands().stream().filter((RaceCommand command) -> command.isEnabled() && command.getCommandType() == event.getCommandType()).collect(Collectors.toList());
 
     for(RaceCommand command : commands) {
       if(

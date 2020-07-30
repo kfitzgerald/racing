@@ -1,10 +1,10 @@
 package com.github.hornta.racing.commands;
 
-import com.github.hornta.commando.ICommandHandler;
+import se.hornta.commando.ICommandHandler;
 import com.github.hornta.racing.RacingManager;
 import com.github.hornta.racing.enums.RaceState;
 import com.github.hornta.racing.MessageKey;
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.objects.Race;
 import org.bukkit.command.CommandSender;
 
@@ -30,9 +30,7 @@ public class CommandUnsetSong extends RacingCommand implements ICommandHandler {
 
     race.setSong(null);
 
-    racingManager.updateRace(race, () -> {
-      MessageManager.sendMessage(commandSender, MessageKey.RACE_UNSET_SONG_SUCCESS);
-    });
+    racingManager.updateRace(race, () -> MessageManager.sendMessage(commandSender, MessageKey.RACE_UNSET_SONG_SUCCESS));
   }
 }
 

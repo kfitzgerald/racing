@@ -7,10 +7,8 @@ import com.github.hornta.racing.enums.Permission;
 import com.github.hornta.racing.enums.RaceSessionState;
 import com.github.hornta.racing.enums.RaceStatType;
 import com.github.hornta.racing.enums.RaceSignType;
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.events.AddRaceStartPointEvent;
-import com.github.hornta.racing.events.CreateRaceEvent;
-import com.github.hornta.racing.events.DeleteRaceEvent;
 import com.github.hornta.racing.events.DeleteRaceStartPointEvent;
 import com.github.hornta.racing.events.LeaveEvent;
 import com.github.hornta.racing.events.LoadRaceEvent;
@@ -62,6 +60,8 @@ public class SignManager implements Listener {
     wallSignMaterials.add(Material.JUNGLE_WALL_SIGN);
     wallSignMaterials.add(Material.OAK_WALL_SIGN);
     wallSignMaterials.add(Material.LEGACY_WALL_SIGN);
+    wallSignMaterials.add(Material.CRIMSON_WALL_SIGN);
+    wallSignMaterials.add(Material.WARPED_WALL_SIGN);
 
     signPostMaterial = new HashSet<>();
     signPostMaterial.add(Material.SPRUCE_SIGN);
@@ -71,6 +71,8 @@ public class SignManager implements Listener {
     signPostMaterial.add(Material.JUNGLE_SIGN);
     signPostMaterial.add(Material.OAK_SIGN);
     signPostMaterial.add(Material.LEGACY_SIGN);
+    wallSignMaterials.add(Material.CRIMSON_SIGN);
+    wallSignMaterials.add(Material.WARPED_SIGN);
   }
 
   SignManager(RacingManager racingManager) {
@@ -136,7 +138,7 @@ public class SignManager implements Listener {
     }
 
     boolean creatingRaceSign =
-      event.getLine(0).equalsIgnoreCase("race") &&
+      "race".equalsIgnoreCase(event.getLine(0)) &&
       event.getPlayer().hasPermission(Permission.RACING_MODIFY.toString());
     RaceSignType type = RaceSignType.fromString(event.getLine(2).toUpperCase().replace(" ", "_"));
 
@@ -248,7 +250,7 @@ public class SignManager implements Listener {
       if(race != null)
       {
         int laps = sign.getLaps();
-        RaceStatType statType = null;
+        RaceStatType statType;
 
         switch(sign.getSignType())
         {

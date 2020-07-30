@@ -1,6 +1,6 @@
 package com.github.hornta.racing.commands;
 
-import com.github.hornta.commando.ICommandHandler;
+import se.hornta.commando.ICommandHandler;
 import com.github.hornta.racing.SongManager;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;

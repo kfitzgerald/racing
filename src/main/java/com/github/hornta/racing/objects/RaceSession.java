@@ -1,6 +1,8 @@
 package com.github.hornta.racing.objects;
 
-import com.github.hornta.messenger.MessageManager;
+import org.bukkit.entity.Entity;
+import org.bukkit.event.vehicle.VehicleExitEvent;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.ConfigKey;
 import com.github.hornta.racing.MessageKey;
 import com.github.hornta.racing.RacingPlugin;
@@ -53,7 +55,6 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleEnterEvent;
-import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitTask;
@@ -488,6 +489,10 @@ public class RaceSession implements Listener {
     HandlerList.unregisterAll(this);
   }
 
+  public RacePlayerSession getPlayerSession(Entity e) {
+    return playerSessions.get(e.getUniqueId());
+  }
+
   public void leave(Player player) {
     RacePlayerSession playerSession = playerSessions.get(player.getUniqueId());
     playerSession.restore();
@@ -814,6 +819,18 @@ public class RaceSession implements Listener {
     }
 
     RacePlayerSession session = playerSessions.get(player.getUniqueId());
+    switch (race.getType()) {
+      case PLAYER:
+      case ELYTRA:
+        event.setCancelled(true);
+        return;
+      case MINECART:
+      case HORSE:
+      case BOAT:
+      case PIG:
+      case STRIDER:
+      default:
+    }
 
     // if player is already mounted we need to cancel a new attempt to mount
     if(!session.isAllowedToEnterVehicle()) {
@@ -822,28 +839,32 @@ public class RaceSession implements Listener {
       // because the player attempted to mount another vehicle, they become automatically dismounted from their current vehicle
       if(session.getVehicle() != event.getVehicle()) {
         // remount them onto their real vehicle
-        Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), session::enterVehicle);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
+          session.enterVehicle(session.getVehicle());
+        });
       }
 
       return;
     }
 
-    if(race.getType() == RaceType.PIG && event.getVehicle().getType() != EntityType.PIG) {
-      event.setCancelled(true);
-    }
-
-    if(race.getType() == RaceType.HORSE && event.getVehicle().getType() != EntityType.HORSE) {
-      event.setCancelled(true);
-    }
-
-    if(race.getType() == RaceType.MINECART && event.getVehicle().getType() != EntityType.MINECART) {
+    if(
+      (race.getType() == RaceType.PIG && event.getVehicle().getType() != EntityType.PIG) ||
+      (race.getType() == RaceType.HORSE && event.getVehicle().getType() != EntityType.HORSE) ||
+      (race.getType() == RaceType.MINECART && event.getVehicle().getType() != EntityType.MINECART) ||
+      (race.getType() == RaceType.STRIDER && event.getVehicle().getType() != EntityType.STRIDER)
+    ) {
       event.setCancelled(true);
     }
   }
 
   @EventHandler
   void onVehicleExit(VehicleExitEvent event) {
-    if(!(event.getExited() instanceof Player) || state != RaceSessionState.STARTED && state != RaceSessionState.COUNTDOWN) {
+    boolean isPlayer = event.getExited() instanceof Player;
+    if(!isPlayer) {
+      return;
+    }
+
+    if (state == RaceSessionState.PREPARING) {
       return;
     }
 
@@ -877,6 +898,12 @@ public class RaceSession implements Listener {
         }
         break;
 
+      case STRIDER:
+        if(event.getItemDrop().getItemStack().getType() == Material.WARPED_FUNGUS_ON_A_STICK) {
+          event.setCancelled(true);
+        }
+        break;
+
       case HORSE:
         if(event.getItemDrop().getItemStack().getType() == Material.SADDLE) {
           event.setCancelled(true);
@@ -896,6 +923,12 @@ public class RaceSession implements Listener {
     switch (race.getType()) {
       case PIG:
         if(event.getItem().getType() == Material.CARROT_ON_A_STICK) {
+          event.setCancelled(true);
+        }
+        break;
+
+      case STRIDER:
+        if(event.getItem().getType() == Material.WARPED_FUNGUS_ON_A_STICK) {
           event.setCancelled(true);
         }
         break;
@@ -980,6 +1013,8 @@ public class RaceSession implements Listener {
         return RespawnType.valueOf(((String)RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RESPAWN_HORSE_INTERACT)).toUpperCase(Locale.ENGLISH));
       case PIG:
         return RespawnType.valueOf(((String)RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RESPAWN_PIG_INTERACT)).toUpperCase(Locale.ENGLISH));
+      case STRIDER:
+        return RespawnType.valueOf(((String)RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RESPAWN_STRIDER_INTERACT)).toUpperCase(Locale.ENGLISH));
       case BOAT:
         return RespawnType.valueOf(((String)RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RESPAWN_BOAT_INTERACT)).toUpperCase(Locale.ENGLISH));
       case ELYTRA:
@@ -999,6 +1034,8 @@ public class RaceSession implements Listener {
         return RespawnType.valueOf(((String)RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RESPAWN_HORSE_DEATH)).toUpperCase(Locale.ENGLISH));
       case PIG:
         return RespawnType.valueOf(((String)RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RESPAWN_PIG_DEATH)).toUpperCase(Locale.ENGLISH));
+      case STRIDER:
+        return RespawnType.valueOf(((String)RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RESPAWN_STRIDER_DEATH)).toUpperCase(Locale.ENGLISH));
       case BOAT:
         return RespawnType.valueOf(((String)RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RESPAWN_BOAT_DEATH)).toUpperCase(Locale.ENGLISH));
       case ELYTRA:

@@ -1,15 +1,15 @@
 package com.github.hornta.racing.commands;
 
-import com.github.hornta.commando.ICommandHandler;
+import se.hornta.commando.ICommandHandler;
 import com.github.hornta.racing.RacingManager;
 import com.github.hornta.racing.Util;
 import com.github.hornta.racing.enums.RaceState;
 import com.github.hornta.racing.MessageKey;
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.objects.Race;
 import com.github.hornta.racing.objects.RaceCheckpoint;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 
 public class CommandAddCheckpoint extends RacingCommand implements ICommandHandler {
   public CommandAddCheckpoint(RacingManager racingManager) {
@@ -19,6 +19,7 @@ public class CommandAddCheckpoint extends RacingCommand implements ICommandHandl
   @Override
   public void handle(CommandSender commandSender, String[] args, int typedArgs) {
     Race race = racingManager.getRace(args[0]);
+    int position = Integer.parseInt(args[1]);
 
     if(race.getState() != RaceState.UNDER_CONSTRUCTION) {
       MessageManager.setValue("race_name", race.getName());
@@ -26,17 +27,23 @@ public class CommandAddCheckpoint extends RacingCommand implements ICommandHandl
       return;
     }
 
-    Player player = (Player)commandSender;
+    Entity entity = (Entity) commandSender;
 
-    if(race.getCheckpoint(player.getLocation()) != null) {
+    if (position > race.getCheckpoints().size() + 1) {
+      MessageManager.setValue("max", race.getCheckpoints().size() + 1);
+      MessageManager.sendMessage(commandSender, MessageKey.RACE_ADD_CHECKPOINT_POSITION_OUT_OF_BOUNDS);
+      return;
+    }
+
+    if(race.getCheckpoint(entity.getLocation()) != null) {
       MessageManager.sendMessage(commandSender, MessageKey.RACE_ADD_CHECKPOINT_IS_OCCUPIED);
       return;
     }
 
-    racingManager.addCheckpoint(Util.centerOnBlock(player.getLocation()), race, (RaceCheckpoint checkPoint) -> {
+    racingManager.addCheckpoint(Util.centerOnBlock(entity.getLocation()), race, position, (RaceCheckpoint checkPoint) -> {
       MessageManager.setValue("race_name", race.getName());
       MessageManager.setValue("position", checkPoint.getPosition());
-      MessageManager.sendMessage(player, MessageKey.RACE_ADD_CHECKPOINT_SUCCESS);
+      MessageManager.sendMessage(entity, MessageKey.RACE_ADD_CHECKPOINT_SUCCESS);
     });
   }
 }

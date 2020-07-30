@@ -1,6 +1,6 @@
 package com.github.hornta.racing.enums;
 
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.MessageKey;
 
 public enum RaceStatType {

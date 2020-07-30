@@ -5,8 +5,8 @@ import java.util.Map;
 
 public class RaceSessionResult {
   private final RaceSession raceSession;
-  private Map<RacePlayerSession, PlayerSessionResult> playerResults = new HashMap<>();
-  private Map<Integer, PlayerSessionResult> resultsByPosition = new HashMap<>();
+  private final Map<RacePlayerSession, PlayerSessionResult> playerResults = new HashMap<>();
+  private final Map<Integer, PlayerSessionResult> resultsByPosition = new HashMap<>();
 
   public RaceSessionResult(RaceSession raceSession) {
     this.raceSession = raceSession;

@@ -1,8 +1,8 @@
 package com.github.hornta.racing.commands.argumentHandlers;
 
-import com.github.hornta.commando.ValidationResult;
-import com.github.hornta.commando.completers.IArgumentHandler;
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.commando.ValidationResult;
+import se.hornta.commando.completers.IArgumentHandler;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.RacingManager;
 import com.github.hornta.racing.MessageKey;
 import com.github.hornta.racing.objects.Race;

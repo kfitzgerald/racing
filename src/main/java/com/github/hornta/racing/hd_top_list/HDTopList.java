@@ -1,6 +1,6 @@
 package com.github.hornta.racing.hd_top_list;
 
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.ConfigKey;
 import com.github.hornta.racing.MessageKey;
 import com.github.hornta.racing.RacingPlugin;

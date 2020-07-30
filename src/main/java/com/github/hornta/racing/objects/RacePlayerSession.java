@@ -22,6 +22,8 @@ import org.bukkit.entity.Horse;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Pig;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Steerable;
+import org.bukkit.entity.Strider;
 import org.bukkit.entity.Tameable;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
@@ -155,6 +157,8 @@ public class RacePlayerSession {
 
     if(vehicle instanceof Pig) {
       player.getInventory().setItemInMainHand(new ItemStack(Material.CARROT_ON_A_STICK, 1));
+    } else if(vehicle instanceof Strider) {
+      player.getInventory().setItemInMainHand(new ItemStack(Material.WARPED_FUNGUS_ON_A_STICK, 1));
     } else if(vehicle instanceof Horse) {
       unfreezeHorse();
     }
@@ -185,6 +189,10 @@ public class RacePlayerSession {
       case PIG:
         spawnVehicle(EntityType.PIG, location);
         setupPig();
+        break;
+      case STRIDER:
+        spawnVehicle(EntityType.STRIDER, location);
+        setupStrider();
         break;
       case MINECART:
         spawnVehicle(EntityType.MINECART, location);
@@ -220,24 +228,28 @@ public class RacePlayerSession {
         playerTeleportLoc = playerTeleportLoc.clone().add(0, -0.45, 0);
       }
 
-      PaperLib.teleportAsync(player, playerTeleportLoc, PlayerTeleportEvent.TeleportCause.PLUGIN).thenAccept((Boolean result) -> {
-        Bukkit.getScheduler().runTask(RacingPlugin.getInstance(), () -> {
-          RacingPlugin.debug("Teleported %s to vehicle %s", player.getName(), vehicle.getType());
+      PaperLib.teleportAsync(
+        player,
+        playerTeleportLoc,
+        PlayerTeleportEvent.TeleportCause.PLUGIN).thenAccept((Boolean result) -> {
+          Bukkit.getScheduler().runTask(RacingPlugin.getInstance(), () -> {
+            RacingPlugin.debug("Teleported %s to vehicle %s", player.getName(), vehicle.getType());
 
-          // important to set this after teleporting away from a potential source of fire.
-          // 2 ticks looks like the minimum amount of ticks needed to wait after setting it to zero...
-          Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
-            player.setFireTicks(0);
-            if (fireTicksResetCallback != null) {
-              fireTicksResetCallback.run();
+            // important to set this after teleporting away from a potential source of fire.
+            // 2 ticks looks like the minimum amount of ticks needed to wait after setting it to zero...
+            Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
+              player.setFireTicks(0);
+              if (fireTicksResetCallback != null) {
+                fireTicksResetCallback.run();
+              }
+            }, 2);
+            enterVehicle(vehicle);
+            if (runnable != null) {
+              runnable.run();
             }
-          }, 2);
-          enterVehicle();
-          if (runnable != null) {
-            runnable.run();
-          }
-        });
-      });
+          });
+        }
+      );
     }, 1L);
   }
 
@@ -272,34 +284,39 @@ public class RacePlayerSession {
     switch (raceSession.getRace().getType()) {
       case PLAYER:
       case ELYTRA:
-        PaperLib.teleportAsync(player, loc, PlayerTeleportEvent.TeleportCause.PLUGIN).thenAccept((Boolean result) -> {
-          Bukkit.getScheduler().runTaskLater(RacingPlugin.getInstance(), () -> {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
-              player.setFireTicks(0);
-              if(fireTicksResetCallback != null) {
-                fireTicksResetCallback.run();
+        PaperLib.teleportAsync(
+          player,
+          loc,
+          PlayerTeleportEvent.TeleportCause.PLUGIN).thenAccept((Boolean result) -> {
+            Bukkit.getScheduler().runTaskLater(RacingPlugin.getInstance(), () -> {
+              Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
+                player.setFireTicks(0);
+                if(fireTicksResetCallback != null) {
+                  fireTicksResetCallback.run();
+                }
+              }, 2);
+
+              if(result && runnable != null) {
+                runnable.run();
               }
-            }, 2);
 
-            if(result && runnable != null) {
-              runnable.run();
-            }
-
-            // Multiverse is changing the players game mode after teleporting to the world containing the
-            // start position which is why we need to run this callback on the CURRENT_TICK + 2 so that
-            // Multiverse has time to run their task that(found in link) before our task so we have the final say
-            // in what game mode the player should have.
-            // https://github.com/Multiverse/Multiverse-Core/blob/1fac13247f297a5d6043b475cade3d18f5d54c2b/src/main/java/com/onarandombox/MultiverseCore/listeners/MVPlayerListener.java#L351
-            //
-            // runTaskLater(, , 0) would make the callback run on the next tick which isn't desirable
-            // because of the above statement
-          }, 1);
-        });
+              // Multiverse is changing the players game mode after teleporting to the world containing the
+              // start position which is why we need to run this callback on the CURRENT_TICK + 2 so that
+              // Multiverse has time to run their task that(found in link) before our task so we have the final say
+              // in what game mode the player should have.
+              // https://github.com/Multiverse/Multiverse-Core/blob/1fac13247f297a5d6043b475cade3d18f5d54c2b/src/main/java/com/onarandombox/MultiverseCore/listeners/MVPlayerListener.java#L351
+              //
+              // runTaskLater(, , 0) would make the callback run on the next tick which isn't desirable
+              // because of the above statement
+            }, 1);
+          }
+        );
         break;
       case MINECART:
       case BOAT:
       case HORSE:
       case PIG:
+      case STRIDER:
         respawnInVehicle(loc, runnable, fireTicksResetCallback);
         break;
     }
@@ -314,10 +331,19 @@ public class RacePlayerSession {
   private void setupPig() {
     ((LivingEntity) vehicle).setAI(false);
     RacingPlugin.debug("Disable pig AI");
-    ((Pig)vehicle).setSaddle(true);
+    ((Steerable) vehicle).setSaddle(true);
     RacingPlugin.debug("Giving pig a saddle");
     ((Attributable) vehicle).getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(raceSession.getRace().getPigSpeed());
     RacingPlugin.debug("Setting movementspeed on pig to " + raceSession.getRace().getPigSpeed());
+  }
+
+  private void setupStrider() {
+    ((LivingEntity) vehicle).setAI(false);
+    RacingPlugin.debug("Disable strider AI");
+    ((Steerable) vehicle).setSaddle(true);
+    RacingPlugin.debug("Giving strider a saddle");
+    ((Attributable) vehicle).getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(raceSession.getRace().getStriderSpeed());
+    RacingPlugin.debug("Setting movementspeed on strider to " + raceSession.getRace().getStriderSpeed());
   }
 
   private void setupHorse(HorseData horseData) {
@@ -383,8 +409,8 @@ public class RacePlayerSession {
     return allowedToExitVehicle;
   }
 
-  void enterVehicle() {
-    RacingPlugin.debug("Attempting to enter passanger %s to vehicle %s", player.getName(), vehicle.getType());
+  public void enterVehicle(Entity vehicle) {
+    RacingPlugin.debug("Attempting to enter passenger %s to vehicle %s", player.getName(), vehicle.getType());
     allowedToEnterVehicle = true;
     vehicle.addPassenger(player);
     allowedToEnterVehicle = false;

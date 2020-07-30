@@ -14,7 +14,7 @@ import java.util.UUID;
 public class RacePoint {
   private Location location;
   private int position;
-  private UUID id;
+  private final UUID id;
   private Hologram hologram;
 
   public RacePoint(UUID id, int position, Location location) {
@@ -41,6 +41,14 @@ public class RacePoint {
 
   public Location getLocation() {
     return location.clone();
+  }
+
+  public void setLocation(Location location) {
+    this.location = location;
+
+    if(hologram != null) {
+      hologram.teleport(location.clone().add(new Vector(0, 1, 0)));
+    }
   }
 
   public void setupHologram() {

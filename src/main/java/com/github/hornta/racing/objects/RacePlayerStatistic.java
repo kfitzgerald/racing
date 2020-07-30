@@ -79,7 +79,7 @@ public class RacePlayerStatistic {
   }
 
   public void setFastestLap(long time) {
-    this.fastestLap = time;
+    fastestLap = time;
   }
 
   public void setWins(int wins) {

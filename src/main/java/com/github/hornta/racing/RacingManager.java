@@ -1,6 +1,9 @@
 package com.github.hornta.racing;
 
-import com.github.hornta.messenger.MessageManager;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import com.github.hornta.racing.features.Remount;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.api.RacingAPI;
 import com.github.hornta.racing.enums.JoinType;
 import com.github.hornta.racing.enums.Permission;
@@ -19,7 +22,6 @@ import com.github.hornta.racing.events.ExecuteCommandEvent;
 import com.github.hornta.racing.events.LoadRaceEvent;
 import com.github.hornta.racing.events.RaceChangeNameEvent;
 import com.github.hornta.racing.events.RaceChangeStateEvent;
-import com.github.hornta.racing.events.RaceEvent;
 import com.github.hornta.racing.events.RacePlayerGoalEvent;
 import com.github.hornta.racing.events.RaceResultUpdatedEvent;
 import com.github.hornta.racing.events.RaceSessionResultEvent;
@@ -82,6 +84,7 @@ public class RacingManager implements Listener {
     pluginManager.registerEvents(new AllowTeleport(), RacingPlugin.getInstance());
     pluginManager.registerEvents(new FoodLevel(), RacingPlugin.getInstance());
     pluginManager.registerEvents(new DamageParticipants(), RacingPlugin.getInstance());
+    ProtocolLibrary.getProtocolManager().addPacketListener(new Remount());
   }
 
   public void shutdown() {
@@ -164,6 +167,14 @@ public class RacingManager implements Listener {
   void onAddRaceCheckpoint(AddRaceCheckpointEvent event) {
     event.getCheckpoint().startTask(true);
     event.getCheckpoint().setupHologram();
+
+    for(RaceCheckpoint cp : event.getRace().getCheckpoints()) {
+      if(cp.getPosition() > event.getCheckpoint().getPosition()) {
+        cp.removeHologram();
+        cp.setupHologram();
+      }
+    }
+
     addChunkTickets();
   }
 
@@ -184,6 +195,14 @@ public class RacingManager implements Listener {
   @EventHandler
   void onAddRaceStartPoint(AddRaceStartPointEvent event) {
     event.getStartPoint().setupHologram();
+
+    for(RaceStartPoint cp : event.getRace().getStartPoints()) {
+      if(cp.getPosition() > event.getStartPoint().getPosition()) {
+        cp.removeHologram();
+        cp.setupHologram();
+      }
+    }
+
     addChunkTickets();
   }
 
@@ -262,9 +281,10 @@ public class RacingManager implements Listener {
       }
     }
 
-    updateRace(event.getResult().getRaceSession().getRace(), () -> {
-      Bukkit.getPluginManager().callEvent(new RaceResultUpdatedEvent(event.getResult().getRaceSession().getRace()));
-    });
+    updateRace(
+      event.getResult().getRaceSession().getRace(),
+      () -> Bukkit.getPluginManager().callEvent(new RaceResultUpdatedEvent(event.getResult().getRaceSession().getRace()))
+    );
   }
 
   @EventHandler
@@ -426,34 +446,76 @@ public class RacingManager implements Listener {
     }));
   }
 
-  public void addCheckpoint(Location location, Race race, Consumer<RaceCheckpoint> consumer) {
-    RaceCheckpoint checkpoint = new RaceCheckpoint(UUID.randomUUID(), race.getCheckpoints().size() + 1, location, 3);
+  public void addCheckpoint(Location location, Race race, int position, Consumer<RaceCheckpoint> consumer) {
+    RaceCheckpoint checkpoint = new RaceCheckpoint(UUID.randomUUID(), position, location, 3);
 
-    api.addCheckpoint(race.getId(), checkpoint,
-        (Boolean result) -> Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
-          if (result) {
-            race.addStartPoint(checkpoint);
-            Bukkit.getPluginManager().callEvent(new AddRaceCheckpointEvent(race, checkpoint));
-            consumer.accept(checkpoint);
-          }
-        }));
+    List<RaceCheckpoint> checkpoints = race.getCheckpoints();
+    checkpoints.add(checkpoint.getPosition() - 1, checkpoint);
+    for(int i = checkpoint.getPosition(); i < checkpoints.size(); ++i) {
+      int newPos = checkpoints.get(i).getPosition() + 1;
+      checkpoints.get(i).setPosition(newPos);
+    }
+
+    api.updateCheckpoints(
+      race.getId(),
+      checkpoints,
+      (Boolean result) -> Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
+        if (result) {
+          race.setCheckpoints(checkpoints);
+          Bukkit.getPluginManager().callEvent(new AddRaceCheckpointEvent(race, checkpoint));
+          consumer.accept(checkpoint);
+        }
+      })
+    );
   }
 
   public void deleteCheckpoint(Race race, RaceCheckpoint checkpoint, Runnable runnable) {
-    api.deleteCheckpoint(race.getId(), checkpoint,
-        (Boolean result) -> Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
-          if (result) {
-            race.setCheckpoints(
-                race.getCheckpoints().stream().filter((RaceCheckpoint checkpoint1) -> checkpoint1 != checkpoint)
-                    .peek((RaceCheckpoint checkpoint1) -> {
-                      if (checkpoint1.getPosition() > checkpoint.getPosition()) {
-                        checkpoint1.setPosition(checkpoint1.getPosition() - 1);
-                      }
-                    }).collect(Collectors.toList()));
-            Bukkit.getPluginManager().callEvent(new DeleteRaceCheckpointEvent(race, checkpoint));
-            runnable.run();
-          }
-        }));
+    List<RaceCheckpoint> checkpoints = race.getCheckpoints();
+    int removedIndex = checkpoints.indexOf(checkpoint);
+    for(int i = removedIndex + 1; i < checkpoints.size(); ++i) {
+      checkpoints.get(i).setPosition(checkpoints.get(i).getPosition() - 1);
+    }
+    checkpoints.remove(removedIndex);
+
+    api.updateCheckpoints(
+      race.getId(),
+      checkpoints,
+      (Boolean result) -> Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
+        if (result) {
+          race.setCheckpoints(checkpoints);
+          Bukkit.getPluginManager().callEvent(new DeleteRaceCheckpointEvent(race, checkpoint));
+          runnable.run();
+        }
+      })
+    );
+  }
+
+  public void moveCheckpoint(Location location, Race race, RaceCheckpoint checkpoint, Runnable runnable) {
+    checkpoint.setLocation(location);
+
+    api.updateCheckpoints(
+      race.getId(),
+      race.getCheckpoints(),
+      (Boolean result) -> Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
+        if (result) {
+          runnable.run();
+        }
+      })
+    );
+  }
+
+  public void moveStartPoint(Location location, Race race, RaceStartPoint startPoint, Runnable runnable) {
+    startPoint.setLocation(location);
+
+    api.updateStartPoints(
+      race.getId(),
+      race.getStartPoints(),
+      (Boolean result) -> Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
+        if (result) {
+          runnable.run();
+        }
+      })
+    );
   }
 
   public void createRace(Race race, Runnable callback) {
@@ -482,34 +544,49 @@ public class RacingManager implements Listener {
     }));
   }
 
-  public void addStartPoint(Location location, Race race, Consumer<RaceStartPoint> consumer) {
-    RaceStartPoint startPoint = new RaceStartPoint(UUID.randomUUID(), race.getStartPoints().size() + 1, location);
+  public void addStartPoint(Location location, Race race, int position, Consumer<RaceStartPoint> consumer) {
+    RaceStartPoint startPoint = new RaceStartPoint(UUID.randomUUID(), position, location);
 
-    api.addStartPoint(race.getId(), startPoint,
-        (Boolean result) -> Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
-          if (result) {
-            race.addStartPoint(startPoint);
-            Bukkit.getPluginManager().callEvent(new AddRaceStartPointEvent(race, startPoint));
-            consumer.accept(startPoint);
-          }
-        }));
+    List<RaceStartPoint> startPoints = race.getStartPoints();
+    startPoints.add(startPoint.getPosition() - 1, startPoint);
+    for(int i = startPoint.getPosition(); i < startPoints.size(); ++i) {
+      int newPos = startPoints.get(i).getPosition() + 1;
+      startPoints.get(i).setPosition(newPos);
+    }
+
+    api.updateStartPoints(
+      race.getId(),
+      startPoints,
+      (Boolean result) -> Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
+        if (result) {
+          race.setStartPoints(startPoints);
+          //race.addStartPoint(startPoint);
+          Bukkit.getPluginManager().callEvent(new AddRaceStartPointEvent(race, startPoint));
+          consumer.accept(startPoint);
+        }
+      })
+    );
   }
 
   public void deleteStartPoint(Race race, RaceStartPoint startPoint, Runnable runnable) {
-    api.deleteStartPoint(race.getId(), startPoint,
-        (Boolean result) -> Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
-          if (result) {
-            race.setStartPoints(
-                race.getStartPoints().stream().filter((RaceStartPoint startPoint1) -> startPoint1 != startPoint)
-                    .peek((RaceStartPoint startPoint1) -> {
-                      if (startPoint1.getPosition() > startPoint.getPosition()) {
-                        startPoint1.setPosition(startPoint1.getPosition() - 1);
-                      }
-                    }).collect(Collectors.toList()));
-            Bukkit.getPluginManager().callEvent(new DeleteRaceStartPointEvent(race, startPoint));
-            runnable.run();
-          }
-        }));
+    List<RaceStartPoint> startPoints = race.getStartPoints();
+    int removedIndex = startPoints.indexOf(startPoint);
+    for(int i = removedIndex + 1; i < startPoints.size(); ++i) {
+      startPoints.get(i).setPosition(startPoints.get(i).getPosition() - 1);
+    }
+    startPoints.remove(removedIndex);
+
+    api.updateStartPoints(
+      race.getId(),
+      startPoints,
+      (Boolean result) -> Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
+        if (result) {
+          race.setStartPoints(startPoints);
+          Bukkit.getPluginManager().callEvent(new DeleteRaceStartPointEvent(race, startPoint));
+          runnable.run();
+        }
+      })
+    );
   }
 
   public Race getRace(String name) {

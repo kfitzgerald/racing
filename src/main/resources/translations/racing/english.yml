@@ -8,14 +8,24 @@ commands:
     success: "§eRace name changed from `<old_name>` to `<new_name>`."
   race_add_checkpoint:
     success: "§eNew checkpoint `<position>` has been created for race `<race_name>`."
-    error_is_occupied: "§cThere is already a checkpoint int this location."
+    error_is_occupied: "§cThere is already a checkpoint in this location."
+    error_position_out_of_bounds: "§cMax position you can enter for this checkpoint is <max>."
   race_delete_checkpoint:
     success: "§eCheckpoint `<position>` for race `<race_name>` has been deleted."
+  race_move_checkpoint:
+    success: "§eCheckpoint `<position>` for race `<race_name>` was moved to <x>, <y>, <z> in world `<world>`."
+    error_no_change: "§eCheckpoint `<position>` is already in this location."
+    error_occupied: "§cThere is already a checkpoint in this location."
   race_add_startpoint:
     success: "§eNew start point `<position>` for race `<race_name>` has been created."
     error_is_occupied: "§cThere is already a start point in this location."
+    error_position_out_of_bounds: "§cMax position you can enter for this start point is <max>."
   race_delete_startpoint:
     success: "§eStart point `<position>` for race `<race_name>` has been deleted."
+  race_move_startpoint:
+    success: "§Start point `<position>` for race `<race_name>` was moved to <x>, <y>, <z> in world `<world>`."
+    error_no_change: "§Start point `<position>` is already in this location."
+    error_occupied: "§cThere is already a start point in this location."
   race_spawn:
     error_not_enabled: "§cThis race is not open."
   race_set_spawn:
@@ -82,6 +92,8 @@ commands:
     success: "§eWalk speed has been set to <walk_speed>."
   race_set_pig_speed:
     success: "§ePig speed has been set to <speed>."
+  race_set_strider_speed:
+    success: "§eStrider speed has been set to <speed>."
   race_set_horse_speed:
     success: "§eHorse speed has been set to <speed>."
   race_set_horse_jump_strength:
@@ -104,7 +116,7 @@ commands:
       §eType: §f<type>
       §eState: §f<state>
       §eCreated: §f<created>
-      §eStartpoints: §f<num_startpoints>
+      §eStart points: §f<num_startpoints>
       §eCheckpoints: §f<num_checkpoints>
       <entry_fee|suffix:\n>§eWalk speed: §f<walk_speed>
       §ePotion effects: <none>

@@ -1,17 +1,17 @@
 package com.github.hornta.racing.commands;
 
-import com.github.hornta.commando.ICommandHandler;
+import se.hornta.commando.ICommandHandler;
 import com.github.hornta.racing.RacingManager;
 import com.github.hornta.racing.enums.RaceState;
 import com.github.hornta.racing.MessageKey;
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.objects.Race;
 import com.github.hornta.racing.objects.RaceStartPoint;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class CommandDeleteStartpoint extends RacingCommand implements ICommandHandler {
-  public CommandDeleteStartpoint(RacingManager racingManager) {
+public class CommandDeleteStartPoint extends RacingCommand implements ICommandHandler {
+  public CommandDeleteStartPoint(RacingManager racingManager) {
     super(racingManager);
   }
 

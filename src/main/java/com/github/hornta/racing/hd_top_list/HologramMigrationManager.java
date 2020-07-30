@@ -12,7 +12,7 @@ public class HologramMigrationManager {
 
   public void addMigration(IHologramFileMigration migration) {
 
-    if(migration.from().equals(migration.to())) {
+    if(migration.from() == migration.to()) {
       throw new IllegalArgumentException("Migration from() and to() must return different values");
     }
 
@@ -21,10 +21,10 @@ public class HologramMigrationManager {
     }
 
     for (IHologramFileMigration iFileMigration : migrations) {
-      if (iFileMigration.from().equals(migration.from())) {
+      if (iFileMigration.from() == migration.from()) {
         throw new IllegalArgumentException("There is already a migration with the same from()");
       }
-      if (iFileMigration.to().equals(migration.to())) {
+      if (iFileMigration.to() == migration.to()) {
         throw new IllegalArgumentException("There is already a migration with the same to()");
       }
     }
@@ -53,7 +53,7 @@ public class HologramMigrationManager {
 
     for(IHologramFileMigration migration : migrations) {
       HDTopListVersion fromVersion = HDTopListVersion.fromString(yaml.getString("version"));
-      if(migration.from().equals(fromVersion)) {
+      if(migration.from() == fromVersion) {
         migration.migrate(yaml);
         yaml.set("version", migration.to().toString());
         RacingPlugin.logger().info("Migrate hologram top list from version " + fromVersion.toString() + " to " + migration.to().toString());

@@ -3,10 +3,10 @@ package com.github.hornta.racing.objects;
 import com.github.hornta.racing.enums.RaceCommandType;
 
 public class RaceCommand {
-  private RaceCommandType commandType;
-  private boolean enabled;
-  private String command;
-  private int recipient;
+  private final RaceCommandType commandType;
+  private final boolean enabled;
+  private final String command;
+  private final int recipient;
 
   public RaceCommand(RaceCommandType commandType, boolean enabled, String command, int recipient) {
     this.commandType = commandType;

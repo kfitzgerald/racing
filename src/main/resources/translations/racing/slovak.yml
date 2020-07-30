@@ -9,13 +9,23 @@ commands:
   race_add_checkpoint:
     success: "§eNový záchytný bod `<position>` bol vytvorený pre pretek `<race_name>`."
     error_is_occupied: "§cNa tomto mieste už záchytný bod existuje."
+    error_position_out_of_bounds: "§cMax position you can enter for this checkpoint is <max>."
   race_delete_checkpoint:
     success: "§eZáchytný bod `<position>` pre pretek `<race_name>` bol odstránený."
+  race_move_checkpoint:
+    success: "§eCheckpoint `<position>` for race `<race_name>` was moved to <x>, <y>, <z> in world `<world>`."
+    error_no_change: "§eCheckpoint `<position>` is already in this location."
+    error_occupied: "§cThere is already a checkpoint in this location."
   race_add_startpoint:
     success: "§eNová začiatočná pozícia `<position>` pre pretek `<race_name>` bola vytvorená."
     error_is_occupied: "§cNa tomto mieste sa už nachádza začiatočná pozícia."
+    error_position_out_of_bounds: "§cMax position you can enter for this start point is <max>."
   race_delete_startpoint:
     success: "§eZačiatočná pozícia `<position>` pre pretek `<race_name>` bola odstránená."
+  race_move_startpoint:
+    success: "§Start point `<position>` for race `<race_name>` was moved to <x>, <y>, <z> in world `<world>`."
+    error_no_change: "§Start point `<position>` is already in this location."
+    error_occupied: "§cThere is already a start point in this location."
   race_spawn:
     error_not_enabled: "§cTento závod nie je otvorený."
   race_set_spawn:
@@ -82,6 +92,8 @@ commands:
     success: "§eRýchlosť behu bola nastavená na <walk_speed>."
   race_set_pig_speed:
     success: "§eRýchlosť prasiat bola nastavená na <speed>."
+  race_set_strider_speed:
+    success: "§eStrider speed has been set to <speed>."
   race_set_horse_speed:
     success: "§eRýchlosť koní bola nastavená na <speed>."
   race_set_horse_jump_strength:

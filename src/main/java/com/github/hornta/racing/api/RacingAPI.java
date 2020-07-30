@@ -12,8 +12,6 @@ public interface RacingAPI {
   void fetchAllRaces(Consumer<List<Race>> callback);
   void deleteRace(Race race, Consumer<Boolean> callback);
   void updateRace(Race race, Consumer<Boolean> callback);
-  void addStartPoint(UUID raceId, RaceStartPoint startPoint, Consumer<Boolean> callback);
-  void deleteStartPoint(UUID raceId, RaceStartPoint startPoint, Consumer<Boolean> callback);
-  void addCheckpoint(UUID raceId, RaceCheckpoint checkpoint, Consumer<Boolean> callback);
-  void deleteCheckpoint(UUID raceId, RaceCheckpoint checkpoint, Consumer<Boolean> callback);
+  void updateCheckpoints(UUID raceId, List<RaceCheckpoint> checkpoints, Consumer<Boolean> callback);
+  void updateStartPoints(UUID raceId, List<RaceStartPoint> checkpoints, Consumer<Boolean> callback);
 }

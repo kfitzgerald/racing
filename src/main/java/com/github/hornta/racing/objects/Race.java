@@ -38,6 +38,7 @@ public class Race implements Listener {
   private final Set<RaceSign> signs;
   private final int minimimRequiredParticipantsToStart;
   private double pigSpeed;
+  private double striderSpeed;
   private double horseSpeed;
   private double horseJumpStrength;
 
@@ -64,6 +65,7 @@ public class Race implements Listener {
     Set<RacePlayerStatistic> results,
     int minimimRequiredParticipantsToStart,
     double pigSpeed,
+    double striderSpeed,
     double horseSpeed,
     double horseJumpStrength,
     List<RaceCommand> commands
@@ -85,6 +87,7 @@ public class Race implements Listener {
     this.signs = signs;
     this.minimimRequiredParticipantsToStart = minimimRequiredParticipantsToStart;
     this.pigSpeed = pigSpeed;
+    this.striderSpeed = striderSpeed;
     this.horseSpeed = horseSpeed;
     this.horseJumpStrength = horseJumpStrength;
 
@@ -223,7 +226,7 @@ public class Race implements Listener {
   public void removePotionEffect(PotionEffectType type) {
     Iterator<RacePotionEffect> it = potionEffects.iterator();
     while(it.hasNext()) {
-      if(((RacePotionEffect)it.next()).getType() == type) {
+      if(it.next().getType() == type) {
         it.remove();
         return;
       }
@@ -322,23 +325,15 @@ public class Race implements Listener {
   }
 
   public StartOrder getStartOrder() {
-    return this.startOrder;
+    return startOrder;
   }
 
   public void setStartOrder(StartOrder order) {
-    this.startOrder = order;
+    startOrder = order;
   }
 
   public Instant getCreatedAt() {
     return createdAt;
-  }
-
-  public void addStartPoint(RaceCheckpoint point) {
-    checkpoints.add(point);
-  }
-
-  public void addStartPoint(RaceStartPoint startPoint) {
-    startPoints.add(startPoint);
   }
 
   public void setStartPoints(List<RaceStartPoint> startPoints) {
@@ -385,8 +380,16 @@ public class Race implements Listener {
     return pigSpeed;
   }
 
+  public double getStriderSpeed() {
+    return striderSpeed;
+  }
+
   public void setPigSpeed(double pigSpeed) {
     this.pigSpeed = pigSpeed;
+  }
+
+  public void setStriderSpeed(double striderSpeed) {
+    this.striderSpeed = striderSpeed;
   }
 
   public double getHorseJumpStrength() {

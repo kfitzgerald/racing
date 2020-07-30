@@ -3,11 +3,11 @@ package com.github.hornta.racing.objects;
 import java.util.Random;
 
 public class RGB {
-  private int r;
-  private int g;
-  private int b;
+  private final int r;
+  private final int g;
+  private final int b;
 
-  private static Random random = new Random();
+  private static final Random random = new Random();
 
   RGB(int r, int g, int b) {
     this.r = r;
@@ -15,25 +15,33 @@ public class RGB {
     this.b = b;
   }
 
-  private static float randomWithin(float min, float max) {
-    float rangeMin = 0.0f;
-    float rangeMax = 1.0f;
-    return rangeMin + (rangeMax - rangeMin) * random.nextFloat();
+  private static float randomWithin() {
+    return (float) 0.0 + ((float) 1.0 - (float) 0.0) * random.nextFloat();
   }
 
   public static RGB randomLightColor() {
-    float hue = randomWithin(0f, 1f);
+    float hue = randomWithin();
     float saturation = 0.9f;
     float lightness = 0.55f;
     return fromHSL(hue, saturation, lightness);
   }
 
   private static float hue2rgb(float p, float q, float t) {
-    if(t < 0) t += 1;
-    if(t > 1) t -= 1;
-    if(t < 1/6f) return p + (q - p) * 6 * t;
-    if(t < 1/2f) return q;
-    if(t < 2/3f) return p + (q - p) * (2/3f - t) * 6;
+    if(t < 0) {
+      t += 1;
+    }
+    if(t > 1) {
+      t -= 1;
+    }
+    if(t < 1/6f) {
+      return p + (q - p) * 6 * t;
+    }
+    if(t < 1/2f) {
+      return q;
+    }
+    if(t < 2/3f) {
+      return p + (q - p) * (2/3f - t) * 6;
+    }
     return p;
   }
 

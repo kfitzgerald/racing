@@ -8,7 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 public class McMMOListener implements Listener {
-  private RacingManager racingManager;
+  private final RacingManager racingManager;
 
   public McMMOListener(RacingManager racingManager) {
     this.racingManager = racingManager;

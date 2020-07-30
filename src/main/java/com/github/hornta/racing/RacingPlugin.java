@@ -1,31 +1,33 @@
 package com.github.hornta.racing;
 
-import com.github.hornta.commando.CarbonArgument;
-import com.github.hornta.commando.CarbonArgumentType;
-import com.github.hornta.commando.CarbonCommand;
-import com.github.hornta.commando.Commando;
-import com.github.hornta.commando.ICarbonArgument;
-import com.github.hornta.commando.ValidationResult;
-import com.github.hornta.commando.ValidationStatus;
-import com.github.hornta.messenger.MessageManager;
-import com.github.hornta.messenger.MessagesBuilder;
-import com.github.hornta.messenger.MessengerException;
-import com.github.hornta.messenger.Translation;
-import com.github.hornta.messenger.Translations;
+import se.hornta.commando.CarbonArgument;
+import se.hornta.commando.CarbonArgumentType;
+import se.hornta.commando.CarbonCommand;
+import se.hornta.commando.Commando;
+import se.hornta.commando.ICarbonArgument;
+import se.hornta.commando.ValidationResult;
+import se.hornta.commando.ValidationStatus;
+import se.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessagesBuilder;
+import se.hornta.messenger.MessengerException;
+import se.hornta.messenger.Translation;
+import se.hornta.messenger.Translations;
 import com.github.hornta.racing.api.FileAPI;
 import com.github.hornta.racing.api.StorageType;
 import com.github.hornta.racing.commands.CommandAddCheckpoint;
 import com.github.hornta.racing.commands.CommandAddPotionEffect;
-import com.github.hornta.racing.commands.CommandAddStartpoint;
+import com.github.hornta.racing.commands.CommandAddStartPoint;
 import com.github.hornta.racing.commands.CommandClearPotionEffects;
 import com.github.hornta.racing.commands.CommandCreateRace;
 import com.github.hornta.racing.commands.CommandDeleteCheckpoint;
 import com.github.hornta.racing.commands.CommandDeleteRace;
-import com.github.hornta.racing.commands.CommandDeleteStartpoint;
+import com.github.hornta.racing.commands.CommandDeleteStartPoint;
 import com.github.hornta.racing.commands.CommandHelp;
 import com.github.hornta.racing.commands.CommandInfo;
 import com.github.hornta.racing.commands.CommandJoinRace;
 import com.github.hornta.racing.commands.CommandLeave;
+import com.github.hornta.racing.commands.CommandMoveCheckpoint;
+import com.github.hornta.racing.commands.CommandMoveStartPoint;
 import com.github.hornta.racing.commands.CommandPlaySong;
 import com.github.hornta.racing.commands.CommandRaceSetSpawn;
 import com.github.hornta.racing.commands.CommandRaceSpawn;
@@ -43,6 +45,7 @@ import com.github.hornta.racing.commands.CommandSetRaceName;
 import com.github.hornta.racing.commands.CommandSetRaceState;
 import com.github.hornta.racing.commands.CommandSetSong;
 import com.github.hornta.racing.commands.CommandSetStartOrder;
+import com.github.hornta.racing.commands.CommandSetStriderSpeed;
 import com.github.hornta.racing.commands.CommandSetType;
 import com.github.hornta.racing.commands.CommandSetWalkSpeed;
 import com.github.hornta.racing.commands.CommandSkipWait;
@@ -74,13 +77,14 @@ import com.github.hornta.racing.enums.TeleportAfterRaceWhen;
 import com.github.hornta.racing.hd_top_list.commands.CommandTeleportHDTopList;
 import com.github.hornta.racing.hd_top_list.commands.argumentHandlers.TopListArgumentHandler;
 import com.github.hornta.racing.mcmmo.McMMOListener;
+import com.github.hornta.racing.objects.Race;
 import com.github.hornta.racing.objects.RaceCommandExecutor;
-import com.github.hornta.versioned_config.Configuration;
-import com.github.hornta.versioned_config.ConfigurationBuilder;
-import com.github.hornta.versioned_config.ConfigurationException;
-import com.github.hornta.versioned_config.Migration;
-import com.github.hornta.versioned_config.Patch;
-import com.github.hornta.versioned_config.Type;
+import se.hornta.versioned_config.Configuration;
+import se.hornta.versioned_config.ConfigurationBuilder;
+import se.hornta.versioned_config.ConfigurationException;
+import se.hornta.versioned_config.Migration;
+import se.hornta.versioned_config.Patch;
+import se.hornta.versioned_config.Type;
 import com.gmail.nossr50.mcMMO;
 import net.milkbowl.vault.economy.Economy;
 import org.bstats.bukkit.Metrics;
@@ -278,6 +282,12 @@ public class RacingPlugin extends JavaPlugin {
       patch.set(ConfigKey.PREVENT_JOIN_FROM_WORLD, "prevent_join_from_world", Collections.emptyList(), Type.LIST);
       return patch;
     }));
+    cb.addMigration(new Migration<>(5, () -> {
+      Patch<ConfigKey> patch = new Patch<>();
+      patch.set(ConfigKey.RESPAWN_STRIDER_DEATH, "respawn.strider.death", RespawnType.FROM_LAST_CHECKPOINT, Type.STRING);
+      patch.set(ConfigKey.RESPAWN_STRIDER_INTERACT, "respawn.strider.interact", RespawnType.NONE, Type.STRING);
+      return patch;
+    }));
     configuration = cb.create();
   }
 
@@ -289,9 +299,11 @@ public class RacingPlugin extends JavaPlugin {
     m.add(MessageKey.CHANGE_RACE_NAME_SUCCESS, "commands.change_race_name.success");
     m.add(MessageKey.RACE_ADD_CHECKPOINT_SUCCESS, "commands.race_add_checkpoint.success");
     m.add(MessageKey.RACE_ADD_CHECKPOINT_IS_OCCUPIED, "commands.race_add_checkpoint.error_is_occupied");
+    m.add(MessageKey.RACE_ADD_CHECKPOINT_POSITION_OUT_OF_BOUNDS, "commands.race_add_checkpoint.error_position_out_of_bounds");
     m.add(MessageKey.RACE_DELETE_CHECKPOINT_SUCCESS, "commands.race_delete_checkpoint.success");
     m.add(MessageKey.RACE_ADD_STARTPOINT_SUCCESS, "commands.race_add_startpoint.success");
     m.add(MessageKey.RACE_ADD_STARTPOINT_IS_OCCUPIED, "commands.race_add_startpoint.error_is_occupied");
+    m.add(MessageKey.RACE_ADD_STARTPOINT_POSITION_OUT_OF_BOUNDS, "commands.race_add_startpoint.error_position_out_of_bounds");
     m.add(MessageKey.RACE_DELETE_STARTPOINT_SUCCESS, "commands.race_delete_startpoint.success");
     m.add(MessageKey.RACE_SPAWN_NOT_ENABLED, "commands.race_spawn.error_not_enabled");
     m.add(MessageKey.RACE_SET_SPAWN_SUCCESS, "commands.race_set_spawn.success");
@@ -337,6 +349,7 @@ public class RacingPlugin extends JavaPlugin {
     m.add(MessageKey.RACE_SET_ENTRYFEE, "commands.race_set_entryfee.success");
     m.add(MessageKey.RACE_SET_WALKSPEED, "commands.race_set_walkspeed.success");
     m.add(MessageKey.RACE_SET_PIG_SPEED, "commands.race_set_pig_speed.success");
+    m.add(MessageKey.RACE_SET_STRIDER_SPEED, "commands.race_set_strider_speed.success");
     m.add(MessageKey.RACE_SET_HORSE_SPEED, "commands.race_set_horse_speed.success");
     m.add(MessageKey.RACE_SET_HORSE_JUMP_STRENGTH, "commands.race_set_horse_jump_strength.success");
     m.add(MessageKey.RACE_ADD_POTION_EFFECT, "commands.race_add_potion_effect.success");
@@ -564,11 +577,22 @@ public class RacingPlugin extends JavaPlugin {
       .addCommand("racing addcheckpoint")
       .withHandler(new CommandAddCheckpoint(racingManager))
       .withArgument(raceArgument)
+      .withArgument(
+        new CarbonArgument.Builder("position")
+          .setType(CarbonArgumentType.INTEGER)
+          .setMin(1)
+          .setDefaultValue(CommandSender.class, (CommandSender cs, String[] args) -> {
+            Race race = racingManager.getRace(args[0]);
+            return race.getCheckpoints().size() + 1;
+          })
+          .dependsOn(raceArgument)
+          .create()
+      )
       .requiresPermission(Permission.COMMAND_ADD_CHECKPOINT.toString())
       .requiresPermission(Permission.RACING_MODIFY.toString())
       .preventConsoleCommandSender();
 
-    ICarbonArgument checkpointArgument = new CarbonArgument.Builder("point")
+    ICarbonArgument checkpointArgument = new CarbonArgument.Builder("position")
       .setHandler(new CheckpointArgumentHandler(racingManager, true))
       .dependsOn(raceArgument)
       .create();
@@ -580,6 +604,15 @@ public class RacingPlugin extends JavaPlugin {
       .withArgument(checkpointArgument)
       .requiresPermission(Permission.COMMAND_DELETE_CHECKPOINT.toString())
       .requiresPermission(Permission.RACING_MODIFY.toString());
+
+    commando
+      .addCommand("racing movecheckpoint")
+      .withHandler(new CommandMoveCheckpoint(racingManager))
+      .withArgument(raceArgument)
+      .withArgument(checkpointArgument)
+      .requiresPermission(Permission.COMMAND_MOVE_CHECKPOINT.toString())
+      .requiresPermission(Permission.RACING_MODIFY.toString())
+      .preventConsoleCommandSender();
 
     commando
       .addCommand("racing tpcheckpoint")
@@ -692,6 +725,14 @@ public class RacingPlugin extends JavaPlugin {
       .requiresPermission(Permission.RACING_MODIFY.toString());
 
     commando
+      .addCommand("racing setstriderspeed")
+      .withHandler(new CommandSetStriderSpeed(racingManager))
+      .withArgument(raceArgument)
+      .withArgument(speedArgument)
+      .requiresPermission(Permission.COMMAND_SET_STRIDER_SPEED.toString())
+      .requiresPermission(Permission.RACING_MODIFY.toString());
+
+    commando
       .addCommand("racing sethorsespeed")
       .withHandler(new CommandSetHorseSpeed(racingManager))
       .withArgument(raceArgument)
@@ -753,8 +794,19 @@ public class RacingPlugin extends JavaPlugin {
 
     commando
       .addCommand("racing addstartpoint")
-      .withHandler(new CommandAddStartpoint(racingManager))
+      .withHandler(new CommandAddStartPoint(racingManager))
       .withArgument(raceArgument)
+      .withArgument(
+        new CarbonArgument.Builder("position")
+          .setType(CarbonArgumentType.INTEGER)
+          .setMin(1)
+          .setDefaultValue(CommandSender.class, (CommandSender cs, String[] args) -> {
+            Race race = racingManager.getRace(args[0]);
+            return race.getStartPoints().size() + 1;
+          })
+          .dependsOn(raceArgument)
+          .create()
+      )
       .requiresPermission(Permission.COMMAND_ADD_STARTPOINT.toString())
       .requiresPermission(Permission.RACING_MODIFY.toString())
       .preventConsoleCommandSender();
@@ -767,11 +819,20 @@ public class RacingPlugin extends JavaPlugin {
 
     commando
       .addCommand("racing deletestartpoint")
-      .withHandler(new CommandDeleteStartpoint(racingManager))
+      .withHandler(new CommandDeleteStartPoint(racingManager))
       .withArgument(raceArgument)
       .withArgument(startPointArgument)
       .requiresPermission(Permission.COMMAND_DELETE_STARTPOINT.toString())
       .requiresPermission(Permission.RACING_MODIFY.toString());
+
+    commando
+      .addCommand("racing movestartpoint")
+      .withHandler(new CommandMoveStartPoint(racingManager))
+      .withArgument(raceArgument)
+      .withArgument(startPointArgument)
+      .requiresPermission(Permission.COMMAND_MOVE_STARTPOINT.toString())
+      .requiresPermission(Permission.RACING_MODIFY.toString())
+      .preventConsoleCommandSender();
 
     commando
       .addCommand("racing tpstartpoint")
@@ -996,7 +1057,7 @@ public class RacingPlugin extends JavaPlugin {
     Listener discordManager = new DiscordManager();
     getServer().getPluginManager().registerEvents(discordManager, this);
 
-    String storageTypeString = RacingPlugin.getInstance().configuration.get(ConfigKey.STORAGE);
+    String storageTypeString = getInstance().configuration.get(ConfigKey.STORAGE);
     StorageType storageType = StorageType.valueOf(storageTypeString.toUpperCase(Locale.ENGLISH));
     switch (storageType) {
       case FILE:
@@ -1022,15 +1083,15 @@ public class RacingPlugin extends JavaPlugin {
       return;
     }
 
-    Bukkit.getPluginManager().registerEvents(new McMMOListener(racingManager), RacingPlugin.getInstance());
+    Bukkit.getPluginManager().registerEvents(new McMMOListener(racingManager), getInstance());
   }
 
   public static void debug(String message, Object... args) {
-    if(RacingPlugin.getInstance().configuration.<Boolean>get(ConfigKey.VERBOSE)) {
+    if(getInstance().configuration.<Boolean>get(ConfigKey.VERBOSE)) {
       try {
-        RacingPlugin.getInstance().getLogger().info(String.format(message, args));
+        getInstance().getLogger().info(String.format(message, args));
       } catch (IllegalFormatConversionException e) {
-        RacingPlugin.getInstance().getLogger().log(Level.SEVERE, e.getMessage(), e);
+        getInstance().getLogger().log(Level.SEVERE, e.getMessage(), e);
       }
     }
   }

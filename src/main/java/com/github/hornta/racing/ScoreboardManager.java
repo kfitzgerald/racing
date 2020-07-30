@@ -3,7 +3,7 @@ package com.github.hornta.racing;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 
 import com.github.hornta.racing.events.ConfigReloadedEvent;
 import org.bukkit.Bukkit;
@@ -74,7 +74,7 @@ public class ScoreboardManager implements Listener {
     translationMap.put(RACE_FASTEST_LAP_TIME, MessageManager.getMessage(MessageKey.SCOREBOARD_FASTEST_LAP));
     translationMap.put(LAP_TAG, MessageManager.getMessage(MessageKey.SCOREBOARD_LAP_TAG));
 
-    this.rowsNeeded = calculateNumberOfRowsNeeded();
+    rowsNeeded = calculateNumberOfRowsNeeded();
   }
 
   @EventHandler
@@ -185,7 +185,8 @@ public class ScoreboardManager implements Listener {
     if(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.SCOREBOARD_ENABLED)) {
       Scoreboard board = player.getScoreboard();
       if (configMap.get(scoreboardTeam)) {
-        board.getTeam(scoreboardTeam).setPrefix(convertText(value));
+        Team team = board.getTeam(scoreboardTeam);
+        team.setPrefix(convertText(value));
       }
     }
   }
@@ -198,7 +199,7 @@ public class ScoreboardManager implements Listener {
    */
   private String formatTime(long millis) {
     MillisecondConverter time = new MillisecondConverter(millis);
-    String pattern = this.displayMillis ? "%02d:%02d:%02d.%03d" : "%02d:%02d:%02d";
+    String pattern = displayMillis ? "%02d:%02d:%02d.%03d" : "%02d:%02d:%02d";
     return String.format(pattern, time.getHours(), time.getMinutes(), time.getSeconds(), time.getMilliseconds());
   }
 
@@ -347,10 +348,10 @@ public class ScoreboardManager implements Listener {
      * @param millis
      */
     public MillisecondConverter(long millis) {
-      this.milliseconds = millis;
-      this.seconds = millis / 1000;
-      this.minutes = seconds / 60;
-      this.hours = minutes / 60;
+      milliseconds = millis;
+      seconds = millis / 1000;
+      minutes = seconds / 60;
+      hours = minutes / 60;
     }
 
     public long getMilliseconds() {

@@ -3,7 +3,7 @@ package com.github.hornta.racing.objects;
 import com.github.hornta.racing.ConfigKey;
 import com.github.hornta.racing.RacingPlugin;
 import com.github.hornta.racing.MessageKey;
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Collection;
@@ -20,7 +20,7 @@ class RaceCountdown {
   }
 
   void start(Runnable callback) {
-    this.countdown = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.COUNTDOWN);
+    countdown = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.COUNTDOWN);
     task = new BukkitRunnable() {
       @Override
       public void run() {

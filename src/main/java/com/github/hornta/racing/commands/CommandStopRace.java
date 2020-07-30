@@ -1,10 +1,10 @@
 package com.github.hornta.racing.commands;
 
-import com.github.hornta.commando.ICommandHandler;
+import se.hornta.commando.ICommandHandler;
 import com.github.hornta.racing.ConfigKey;
 import com.github.hornta.racing.RacingManager;
 import com.github.hornta.racing.MessageKey;
-import com.github.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.RacingPlugin;
 import com.github.hornta.racing.objects.Race;
 import com.github.hornta.racing.objects.RaceSession;
