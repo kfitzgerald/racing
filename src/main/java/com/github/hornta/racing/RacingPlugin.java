@@ -912,7 +912,11 @@ public class RacingPlugin extends JavaPlugin {
     commando
       .addCommand("racing stop")
       .withHandler(new CommandStopRace(racingManager))
-      .withArgument(raceArgument)
+      .withArgument(
+        new CarbonArgument.Builder("race")
+          .setHandler(new RaceArgumentHandler(racingManager, (Race race) -> racingManager.hasOngoingSession(race)))
+          .create()
+        )
       .requiresPermission(Permission.COMMAND_STOP.toString())
       .requiresPermission(Permission.RACING_MODERATOR.toString());
 

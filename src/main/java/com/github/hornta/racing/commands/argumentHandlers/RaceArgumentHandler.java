@@ -11,14 +11,29 @@ import org.bukkit.command.CommandSender;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class RaceArgumentHandler implements IArgumentHandler {
   private final RacingManager racingManager;
+  private final Predicate<Race> filter;
   private final boolean shouldExist;
+
+  public RaceArgumentHandler(RacingManager racingManager, Predicate<Race> filter) {
+    this.racingManager = racingManager;
+    this.filter = filter;
+    shouldExist = true;
+  }
+
+  public RaceArgumentHandler(RacingManager racingManager, Predicate<Race> filter, boolean shouldExist) {
+    this.racingManager = racingManager;
+    this.filter = filter;
+    this.shouldExist = shouldExist;
+  }
 
   public RaceArgumentHandler(RacingManager racingManager, boolean shouldExist) {
     this.racingManager = racingManager;
+    filter = null;
     this.shouldExist = shouldExist;
   }
 
@@ -28,6 +43,12 @@ public class RaceArgumentHandler implements IArgumentHandler {
       .getRaces()
       .stream()
       .filter(race -> race.getName().toLowerCase(Locale.ENGLISH).startsWith(argument.toLowerCase(Locale.ENGLISH)))
+      .filter((Race r) -> {
+        if(filter != null) {
+          return filter.test(r);
+        }
+        return true;
+      })
       .map(Race::getName)
       .collect(Collectors.toCollection(LinkedHashSet::new));
   }

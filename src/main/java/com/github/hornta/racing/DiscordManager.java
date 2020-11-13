@@ -2,15 +2,14 @@ package com.github.hornta.racing;
 
 import com.github.hornta.racing.events.ConfigReloadedEvent;
 import com.github.hornta.racing.events.RaceSessionStartEvent;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.events.GenericEvent;
 import se.hornta.messenger.MessageManager;
-import net.dv8tion.jda.core.AccountType;
-import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.JDABuilder;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.events.Event;
-import net.dv8tion.jda.core.events.ReadyEvent;
-import net.dv8tion.jda.core.events.ShutdownEvent;
-import net.dv8tion.jda.core.hooks.EventListener;
+import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.events.ReadyEvent;
+import net.dv8tion.jda.api.events.ShutdownEvent;
+import net.dv8tion.jda.api.hooks.EventListener;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -32,10 +31,10 @@ public class DiscordManager implements Listener, EventListener {
 
   private void startup() {
     startAfterShutdown = false;
+    String token = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.DISCORD_TOKEN);
     try {
-      api = new JDABuilder(AccountType.BOT)
-        .setToken(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.DISCORD_TOKEN))
-        .addEventListener(this)
+      api = JDABuilder.createDefault(token)
+        .addEventListeners(this)
         .build();
     } catch (LoginException e) {
       RacingPlugin.logger().log(Level.SEVERE, "Failed to integrate with Discord, the bot token was incorrect.");
@@ -83,7 +82,7 @@ public class DiscordManager implements Listener, EventListener {
   }
 
   @Override
-  public void onEvent(Event event) {
+  public void onEvent(GenericEvent event) {
     if (event instanceof ShutdownEvent) {
       if(startAfterShutdown) {
         startup();
