@@ -1,17 +1,5 @@
 package com.github.hornta.racing;
 
-import se.hornta.commando.CarbonArgument;
-import se.hornta.commando.CarbonArgumentType;
-import se.hornta.commando.CarbonCommand;
-import se.hornta.commando.Commando;
-import se.hornta.commando.ICarbonArgument;
-import se.hornta.commando.ValidationResult;
-import se.hornta.commando.ValidationStatus;
-import se.hornta.messenger.MessageManager;
-import se.hornta.messenger.MessagesBuilder;
-import se.hornta.messenger.MessengerException;
-import se.hornta.messenger.Translation;
-import se.hornta.messenger.Translations;
 import com.github.hornta.racing.api.FileAPI;
 import com.github.hornta.racing.api.StorageType;
 import com.github.hornta.racing.commands.CommandAddCheckpoint;
@@ -63,6 +51,9 @@ import com.github.hornta.racing.commands.argumentHandlers.RaceTypeArgumentHandle
 import com.github.hornta.racing.commands.argumentHandlers.SongArgumentHandler;
 import com.github.hornta.racing.commands.argumentHandlers.StartOrderArgumentHandler;
 import com.github.hornta.racing.commands.argumentHandlers.StartPointArgumentHandler;
+import com.github.hornta.racing.enums.Permission;
+import com.github.hornta.racing.enums.RespawnType;
+import com.github.hornta.racing.enums.TeleportAfterRaceWhen;
 import com.github.hornta.racing.hd_top_list.HDTopListManager;
 import com.github.hornta.racing.hd_top_list.commands.CommandCreateHDTopList;
 import com.github.hornta.racing.hd_top_list.commands.CommandDeleteHDTopList;
@@ -71,20 +62,11 @@ import com.github.hornta.racing.hd_top_list.commands.CommandMoveHDTopList;
 import com.github.hornta.racing.hd_top_list.commands.CommandSetLapsHDTopList;
 import com.github.hornta.racing.hd_top_list.commands.CommandSetRaceHDTopList;
 import com.github.hornta.racing.hd_top_list.commands.CommandSetStatHDTopList;
-import com.github.hornta.racing.enums.Permission;
-import com.github.hornta.racing.enums.RespawnType;
-import com.github.hornta.racing.enums.TeleportAfterRaceWhen;
 import com.github.hornta.racing.hd_top_list.commands.CommandTeleportHDTopList;
 import com.github.hornta.racing.hd_top_list.commands.argumentHandlers.TopListArgumentHandler;
 import com.github.hornta.racing.mcmmo.McMMOListener;
 import com.github.hornta.racing.objects.Race;
 import com.github.hornta.racing.objects.RaceCommandExecutor;
-import se.hornta.versioned_config.Configuration;
-import se.hornta.versioned_config.ConfigurationBuilder;
-import se.hornta.versioned_config.ConfigurationException;
-import se.hornta.versioned_config.Migration;
-import se.hornta.versioned_config.Patch;
-import se.hornta.versioned_config.Type;
 import com.gmail.nossr50.mcMMO;
 import net.milkbowl.vault.economy.Economy;
 import org.bstats.bukkit.Metrics;
@@ -92,10 +74,24 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Listener;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import se.hornta.commando.CarbonArgument;
+import se.hornta.commando.CarbonArgumentType;
+import se.hornta.commando.CarbonCommand;
+import se.hornta.commando.Commando;
+import se.hornta.commando.ValidationResult;
+import se.hornta.commando.ValidationStatus;
+import se.hornta.messenger.MessageManager;
+import se.hornta.messenger.MessagesBuilder;
+import se.hornta.messenger.MessengerException;
+import se.hornta.messenger.Translations;
+import se.hornta.versioned_config.Configuration;
+import se.hornta.versioned_config.ConfigurationBuilder;
+import se.hornta.versioned_config.ConfigurationException;
+import se.hornta.versioned_config.Migration;
+import se.hornta.versioned_config.Patch;
+import se.hornta.versioned_config.Type;
 
 import java.io.File;
 import java.util.Arrays;
@@ -162,7 +158,7 @@ public class RacingPlugin extends JavaPlugin {
 
     if (Bukkit.getPluginManager().isPluginEnabled("Vault")) {
       {
-        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+        var rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp != null) {
           economy = rsp.getProvider();
         }
@@ -206,10 +202,10 @@ public class RacingPlugin extends JavaPlugin {
   }
 
   private void setupConfig() throws ConfigurationException {
-    File cfgFile = new File(getDataFolder(), "config.yml");
-    ConfigurationBuilder<ConfigKey> cb = new ConfigurationBuilder<>(cfgFile);
+    var cfgFile = new File(getDataFolder(), "config.yml");
+    var cb = new ConfigurationBuilder<ConfigKey>(cfgFile);
     cb.addMigration(new Migration<>(1, () -> {
-      Patch<ConfigKey> patch = new Patch<>();
+      var patch = new Patch<ConfigKey>();
       patch.set(ConfigKey.LANGUAGE, "language", "english", Type.STRING);
       // https://www.loc.gov/standards/iso639-2/php/code_list.php
       patch.set(ConfigKey.LOCALE, "locale", "en", Type.STRING);
@@ -262,14 +258,14 @@ public class RacingPlugin extends JavaPlugin {
       return patch;
     }));
     cb.addMigration(new Migration<>(2, () -> {
-      Patch<ConfigKey> patch = new Patch<>();
+      var patch = new Patch<ConfigKey>();
       patch.set(ConfigKey.HD_TOP_LIST_DIRECTORY, "hd_top_list.directory", "hologram_toplists", Type.STRING);
       patch.set(ConfigKey.HD_TOP_LIST_SHOW_HEADER, "hd_top_list.show_header", true, Type.BOOLEAN);
       patch.set(ConfigKey.HD_TOP_LIST_SHOW_FOOTER, "hd_top_list.show_footer", false, Type.BOOLEAN);
       return patch;
     }));
     cb.addMigration(new Migration<>(3, () -> {
-      Patch<ConfigKey> patch = new Patch<>();
+      var patch = new Patch<ConfigKey>();
       patch.set(ConfigKey.BROADCAST_STOP_MESSAGE, "broadcast_stop_message", true, Type.BOOLEAN);
       patch.set(ConfigKey.BROADCAST_PLAYER_JOIN_MESSAGE, "broadcast_player_join_message", true, Type.BOOLEAN);
       patch.set(ConfigKey.BROADCAST_CANCEL_MESSAGE, "broadcast_cancel_message", true, Type.BOOLEAN);
@@ -278,21 +274,27 @@ public class RacingPlugin extends JavaPlugin {
       return patch;
     }));
     cb.addMigration(new Migration<>(4, () -> {
-      Patch<ConfigKey> patch = new Patch<>();
+      var patch = new Patch<ConfigKey>();
       patch.set(ConfigKey.PREVENT_JOIN_FROM_WORLD, "prevent_join_from_world", Collections.emptyList(), Type.LIST);
       return patch;
     }));
     cb.addMigration(new Migration<>(5, () -> {
-      Patch<ConfigKey> patch = new Patch<>();
+      var patch = new Patch<ConfigKey>();
       patch.set(ConfigKey.RESPAWN_STRIDER_DEATH, "respawn.strider.death", RespawnType.FROM_LAST_CHECKPOINT, Type.STRING);
       patch.set(ConfigKey.RESPAWN_STRIDER_INTERACT, "respawn.strider.interact", RespawnType.NONE, Type.STRING);
+      return patch;
+    }));
+    cb.addMigration(new Migration<>(6, () -> {
+      var patch = new Patch<ConfigKey>();
+      patch.set(ConfigKey.TELEPORT_AFTER_RACE_ENABLED, "teleport_after_race.enabled", true, Type.BOOLEAN);
+      patch.set(ConfigKey.TELEPORT_AFTER_RACE_WHEN, "teleport_after_race.when", TeleportAfterRaceWhen.PARTICIPANT_FINISHES, Type.STRING);
       return patch;
     }));
     configuration = cb.create();
   }
 
   private void setupMessages() throws MessengerException {
-    MessagesBuilder m = new MessagesBuilder();
+    var m = new MessagesBuilder();
     m.add(MessageKey.CREATE_RACE_SUCCESS, "commands.create_race.success");
     m.add(MessageKey.CREATE_RACE_NAME_OCCUPIED, "commands.create_race.error_name_occupied");
     m.add(MessageKey.DELETE_RACE_SUCCESS, "commands.delete_race.success");
@@ -469,11 +471,11 @@ public class RacingPlugin extends JavaPlugin {
     m.add(MessageKey.HD_TOP_LIST_ITEM, "hd_top_list.item");
     m.add(MessageKey.HD_TOP_LIST_NONE, "hd_top_list.none");
     m.add(MessageKey.HD_TOP_LIST_FOOTER, "hd_top_list.footer");
-    MessageManager messageManager = m.build();
+    var messageManager = m.build();
 
     translations = new Translations(this, messageManager);
     String language = configuration.get(ConfigKey.LANGUAGE);
-    Translation translation = translations.createTranslation(language);
+    var translation = translations.createTranslation(language);
     messageManager.setTranslation(translation);
   }
 
@@ -542,7 +544,7 @@ public class RacingPlugin extends JavaPlugin {
       }
     });
 
-    ICarbonArgument raceArgument =
+    var raceArgument =
       new CarbonArgument.Builder("race")
         .setHandler(new RaceArgumentHandler(racingManager, true))
         .create();
@@ -582,7 +584,7 @@ public class RacingPlugin extends JavaPlugin {
           .setType(CarbonArgumentType.INTEGER)
           .setMin(1)
           .setDefaultValue(CommandSender.class, (CommandSender cs, String[] args) -> {
-            Race race = racingManager.getRace(args[0]);
+            var race = racingManager.getRace(args[0]);
             return race.getCheckpoints().size() + 1;
           })
           .dependsOn(raceArgument)
@@ -592,7 +594,7 @@ public class RacingPlugin extends JavaPlugin {
       .requiresPermission(Permission.RACING_MODIFY.toString())
       .preventConsoleCommandSender();
 
-    ICarbonArgument checkpointArgument = new CarbonArgument.Builder("position")
+    var checkpointArgument = new CarbonArgument.Builder("position")
       .setHandler(new CheckpointArgumentHandler(racingManager, true))
       .dependsOn(raceArgument)
       .create();
@@ -703,7 +705,7 @@ public class RacingPlugin extends JavaPlugin {
     }
 
 
-    ICarbonArgument speedArgument = new CarbonArgument.Builder("speed")
+    var speedArgument = new CarbonArgument.Builder("speed")
       .setType(CarbonArgumentType.NUMBER)
       .setMin(0)
       .create();
@@ -801,7 +803,7 @@ public class RacingPlugin extends JavaPlugin {
           .setType(CarbonArgumentType.INTEGER)
           .setMin(1)
           .setDefaultValue(CommandSender.class, (CommandSender cs, String[] args) -> {
-            Race race = racingManager.getRace(args[0]);
+            var race = racingManager.getRace(args[0]);
             return race.getStartPoints().size() + 1;
           })
           .dependsOn(raceArgument)
@@ -811,7 +813,7 @@ public class RacingPlugin extends JavaPlugin {
       .requiresPermission(Permission.RACING_MODIFY.toString())
       .preventConsoleCommandSender();
 
-    ICarbonArgument startPointArgument =
+    var startPointArgument =
       new CarbonArgument.Builder("point")
         .setHandler(new StartPointArgumentHandler(racingManager, true))
         .dependsOn(raceArgument)
@@ -844,7 +846,7 @@ public class RacingPlugin extends JavaPlugin {
       .preventConsoleCommandSender();
 
     if(noteBlockAPILoaded) {
-      ICarbonArgument songArgument =
+      var songArgument =
         new CarbonArgument.Builder("song")
           .setHandler(new SongArgumentHandler())
           .create();
@@ -880,7 +882,7 @@ public class RacingPlugin extends JavaPlugin {
         .preventConsoleCommandSender();
     }
 
-    ICarbonArgument lapsArgument = new CarbonArgument.Builder("laps")
+    var lapsArgument = new CarbonArgument.Builder("laps")
       .setType(CarbonArgumentType.INTEGER)
       .setDefaultValue(CommandSender.class, 1)
       .setMin(1)
@@ -953,7 +955,7 @@ public class RacingPlugin extends JavaPlugin {
       .requiresPermission(Permission.COMMAND_INFO.toString())
       .requiresPermission(Permission.RACING_MODERATOR.toString());
 
-    ICarbonArgument statArgument = new CarbonArgument.Builder("stat")
+    var statArgument = new CarbonArgument.Builder("stat")
       .setHandler(new RaceStatArgumentHandler())
       .create();
 
@@ -974,7 +976,7 @@ public class RacingPlugin extends JavaPlugin {
       .requiresPermission(Permission.RACING_ADMIN.toString());
 
     if(holographicDisplaysLoaded) {
-      ICarbonArgument topListName = new CarbonArgument.Builder("name")
+      var topListName = new CarbonArgument.Builder("name")
         .setHandler(new TopListArgumentHandler(false))
         .create();
 
@@ -989,7 +991,7 @@ public class RacingPlugin extends JavaPlugin {
         .requiresPermission(Permission.RACING_MODIFY.toString())
         .preventConsoleCommandSender();
 
-      ICarbonArgument topListArg = new CarbonArgument.Builder("toplist")
+      var topListArg = new CarbonArgument.Builder("toplist")
         .setHandler(new TopListArgumentHandler(true))
         .create();
 
@@ -1061,8 +1063,8 @@ public class RacingPlugin extends JavaPlugin {
     Listener discordManager = new DiscordManager();
     getServer().getPluginManager().registerEvents(discordManager, this);
 
-    String storageTypeString = getInstance().configuration.get(ConfigKey.STORAGE);
-    StorageType storageType = StorageType.valueOf(storageTypeString.toUpperCase(Locale.ENGLISH));
+    String storageTypeString = instance.configuration.get(ConfigKey.STORAGE);
+    var storageType = StorageType.valueOf(storageTypeString.toUpperCase(Locale.ENGLISH));
     switch (storageType) {
       case FILE:
         racingManager.setAPI(new FileAPI(this));
@@ -1081,21 +1083,21 @@ public class RacingPlugin extends JavaPlugin {
   }
 
   private void initMcMMO() {
-    Plugin plugin = getServer().getPluginManager().getPlugin("mcMMO");
+    var plugin = getServer().getPluginManager().getPlugin("mcMMO");
 
     if (!(plugin instanceof mcMMO)) {
       return;
     }
 
-    Bukkit.getPluginManager().registerEvents(new McMMOListener(racingManager), getInstance());
+    Bukkit.getPluginManager().registerEvents(new McMMOListener(racingManager), instance);
   }
 
   public static void debug(String message, Object... args) {
-    if(getInstance().configuration.<Boolean>get(ConfigKey.VERBOSE)) {
+    if(instance.configuration.<Boolean>get(ConfigKey.VERBOSE)) {
       try {
-        getInstance().getLogger().info(String.format(message, args));
+        instance.getLogger().info(String.format(message, args));
       } catch (IllegalFormatConversionException e) {
-        getInstance().getLogger().log(Level.SEVERE, e.getMessage(), e);
+        instance.getLogger().log(Level.SEVERE, e.getMessage(), e);
       }
     }
   }

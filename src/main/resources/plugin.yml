@@ -28,4 +28,4 @@ permissions:
   racing.player:
     description: Gives access to basic commands in Racing
     default: true
-api-version: 1.13
+api-version: 1.16
