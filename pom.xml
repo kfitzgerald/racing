@@ -6,7 +6,7 @@
 
     <groupId>com.github.hornta</groupId>
     <artifactId>racing</artifactId>
-    <version>4.0.1</version>
+    <version>4.1.0</version>
 
     <build>
         <plugins>

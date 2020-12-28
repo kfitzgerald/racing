@@ -107,7 +107,7 @@ commands:
   race_leave:
     error_not_participating: "§cYou are not participating in any race."
     success: "§eYou have left race `<race_name>` and were moved to the race spawn point."
-    leave_broadcast: "§e<player_name> has left race `<race_name>`."
+    leave_broadcast: "§e<player_name> has left the race."
     leave_payback: "§eYou have been paid your entry fee of <entry_fee> back."
   race_info:
     success: |
@@ -210,7 +210,6 @@ validators:
 
 race_canceled: "§cRace has been cancelled due to lack of participants."
 race_start_noshow_disqualified: "§e<player_name> was absent and is now disqualified."
-race_start_quit_disqualified: "§e<player_name> left and is now disqualified."
 race_start_gamemode_disqualified: "§e<player_name> is in a forbidden game mode and is now disqualified."
 race_start_gamemode_disqualified_target: "§eYou were disqualified since you are in a forbidden game mode."
 race_death_disqualified: "§e<player_name> died during the race and is now disqualified."

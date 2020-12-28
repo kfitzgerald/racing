@@ -410,7 +410,6 @@ public class RacingPlugin extends JavaPlugin {
     m.add(MessageKey.NOSHOW_DISQUALIFIED, "race_start_noshow_disqualified");
     m.add(MessageKey.GAME_MODE_DISQUALIFIED, "race_start_gamemode_disqualified");
     m.add(MessageKey.GAME_MODE_DISQUALIFIED_TARGET, "race_start_gamemode_disqualified_target");
-    m.add(MessageKey.QUIT_DISQUALIFIED, "race_start_quit_disqualified");
     m.add(MessageKey.DEATH_DISQUALIFIED, "race_death_disqualified");
     m.add(MessageKey.DEATH_DISQUALIFIED_TARGET, "race_death_disqualified_target");
     m.add(MessageKey.EDIT_NO_EDIT_MODE, "edit_no_edit_mode");

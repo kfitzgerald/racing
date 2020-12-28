@@ -107,7 +107,7 @@ commands:
   race_leave:
     error_not_participating: "§cNezúčastňujete sa žiadneho preteku."
     success: "§eOpustili ste pretek `<race_name>`."
-    leave_broadcast: "§e<player_name> opustil pretek `<race_name>`."
+    leave_broadcast: "§e<player_name> opustil pretek."
     leave_payback: "§eVáš poplatok pre účasť o výške <entry_fee> vám bol zaslaný naspäť na váš účet."
   race_info:
     success: |
@@ -210,7 +210,6 @@ validators:
 
 race_canceled: "§cPretek bol zrušený z dôvodu nedostatku uchádzačov."
 race_start_noshow_disqualified: "§e<player_name> chýbal a teraz bol diskvalifikovaný."
-race_start_quit_disqualified: "§e<player_name> odišiel a bol diskvalifikovaný."
 race_start_gamemode_disqualified: "§e<player_name> bol v zakázanom hernom móde a teraz bol diskvalifikovaný."
 race_start_gamemode_disqualified_target: "§eBol si diskvalifikovaný, kedže si bol v zakázanom hernom móde."
 race_death_disqualified: "§e<player_name> zomrel počas preteku a teraz je diskvalifikovaný."

@@ -39,7 +39,7 @@ public class RacePlayerSession {
   private final double chargedEntryFee;
   private final UUID playerId;
   private final String playerName;
-  private Player player;
+  private final Player player;
   private Location startLocation;
   private RaceCheckpoint currentCheckpoint;
   private RaceCheckpoint nextCheckpoint;
@@ -64,10 +64,6 @@ public class RacePlayerSession {
       personalBestLapTime = raceSession.getRace().getResultByPlayerId().get(playerId).getFastestLap();
     }
     RacingPlugin.debug("New RacePlayerSession\nPlayer: %s\nUUID: %s\nCharged: %f", playerName, playerId, chargedEntryFee);
-  }
-
-  public void setPlayer(Player player) {
-    this.player = player;
   }
 
   public boolean hasPlayer() {
@@ -222,7 +218,7 @@ public class RacePlayerSession {
     }
 
     Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
-      Location playerTeleportLoc = location;
+      var playerTeleportLoc = location;
 
       if(vehicle instanceof Boat) {
         playerTeleportLoc = playerTeleportLoc.clone().add(0, -0.45, 0);

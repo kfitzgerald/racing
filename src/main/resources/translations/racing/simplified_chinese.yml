@@ -107,7 +107,7 @@ commands:
   race_leave:
     error_not_participating: §c你没有参加任何竞赛.
     success: §e你离开了竞赛`<race_name>`。
-    leave_broadcast: §e<player_name>离开了竞赛`<race_name>`。
+    leave_broadcast: §e<player_name>离开了竞赛。
     leave_payback: §e已退回给你入场费<entry_fee>。
   race_info:
     success: |
@@ -210,7 +210,6 @@ validators:
 
 race_canceled: §e玩家不足，竞赛取消.
 race_start_noshow_disqualified: §e<player_name>缺席竞赛，已取消竞赛资格。
-race_start_quit_disqualified: §e<player_name>离开了竞赛，已取消竞赛资格。
 race_start_gamemode_disqualified: "§e<player_name>由于使用了被禁用的游戏模式而被取消参赛资格。"
 race_start_gamemode_disqualified_target: "§e由于你使用了被禁用的游戏模式，你失去了参赛资格。"
 race_death_disqualified: "§e<player_name>在竞赛中死亡而失去了竞赛资格。"

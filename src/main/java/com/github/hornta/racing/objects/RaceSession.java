@@ -1,8 +1,5 @@
 package com.github.hornta.racing.objects;
 
-import org.bukkit.entity.Entity;
-import org.bukkit.event.vehicle.VehicleExitEvent;
-import se.hornta.messenger.MessageManager;
 import com.github.hornta.racing.ConfigKey;
 import com.github.hornta.racing.MessageKey;
 import com.github.hornta.racing.RacingPlugin;
@@ -25,12 +22,11 @@ import com.github.hornta.racing.events.SessionStateChangedEvent;
 import com.xxmicloxx.NoteBlockAPI.model.RepeatMode;
 import com.xxmicloxx.NoteBlockAPI.songplayer.RadioSongPlayer;
 import io.papermc.lib.PaperLib;
-import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.milkbowl.vault.economy.Economy;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -49,35 +45,32 @@ import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleEnterEvent;
+import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
+import se.hornta.messenger.MessageManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 
 public class RaceSession implements Listener {
-  private final UUID id;
   private final CommandSender initiator;
   private final Race race;
   private final int laps;
   private final List<BukkitTask> startTimerTasks;
-  private final Map<UUID, RacePlayerSession> playerSessions;
+  private final Map<Player, RacePlayerSession> playerSessions;
   private final ScoreboardManager scoreboardManager;
 
   private RadioSongPlayer songPlayer;
@@ -89,7 +82,6 @@ public class RaceSession implements Listener {
   private int numJoinedParticipants;
 
   public RaceSession(CommandSender initiator, Race race, int laps) {
-    id = UUID.randomUUID();
     this.initiator = initiator;
     this.race = race;
     this.laps = laps;
@@ -124,7 +116,7 @@ public class RaceSession implements Listener {
   }
 
   private ComponentBuilder makeJoinChatCommand() {
-    var hoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(MessageManager.getMessage(MessageKey.PARTICIPATE_HOVER_TEXT)).create());
+    var hoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(MessageManager.getMessage(MessageKey.PARTICIPATE_HOVER_TEXT)));
     MessageManager.setValue("race_name", race.getName());
     var clickEvent = new ClickEvent(ClickEvent.Action.RUN_COMMAND, MessageManager.getMessage(MessageKey.PARTICIPATE_CLICK_TEXT));
     return new ComponentBuilder("").event(hoverEvent).event(clickEvent);
@@ -178,10 +170,12 @@ public class RaceSession implements Listener {
 
     if(initiator instanceof Player) {
       var skipWaitHover = new HoverEvent(
-        HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(MessageManager.getMessage(MessageKey.SKIP_WAIT_HOVER_TEXT)).create()
+        HoverEvent.Action.SHOW_TEXT,
+        new Text(MessageManager.getMessage(MessageKey.SKIP_WAIT_HOVER_TEXT))
       );
       var stopHover = new HoverEvent(
-        HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(MessageManager.getMessage(MessageKey.STOP_RACE_HOVER_TEXT)).create()
+        HoverEvent.Action.SHOW_TEXT,
+        new Text(MessageManager.getMessage(MessageKey.STOP_RACE_HOVER_TEXT))
       );
       var tc = new TextComponent();
       tc.addExtra(
@@ -208,7 +202,7 @@ public class RaceSession implements Listener {
     displayInitiatorControls();
     runAnnouncements();
     int prepareTime = RacingPlugin.getInstance().getConfiguration().get(ConfigKey.RACE_PREPARE_TIME);
-    addStartTimerTask(Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), this::actualStart, prepareTime * 20));
+    addStartTimerTask(Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), this::actualStart, prepareTime * 20L));
   }
 
   private void actualStart() {
@@ -489,14 +483,14 @@ public class RaceSession implements Listener {
     HandlerList.unregisterAll(this);
   }
 
-  public RacePlayerSession getPlayerSession(Entity e) {
-    return playerSessions.get(e.getUniqueId());
+  public RacePlayerSession getPlayerSession(Player player) {
+    return playerSessions.get(player);
   }
 
   public void leave(Player player) {
-    var playerSession = playerSessions.get(player.getUniqueId());
+    var playerSession = playerSessions.get(player);
     playerSession.restore();
-    playerSessions.remove(player.getUniqueId());
+    playerSessions.remove(player);
     scoreboardManager.removeScoreboard(player);
 
     var economy = RacingPlugin.getInstance().getEconomy();
@@ -509,7 +503,6 @@ public class RaceSession implements Listener {
     for(var session : playerSessions.values()) {
       if(session.getPlayer() != null) {
         MessageManager.setValue("player_name", player.getName());
-        MessageManager.setValue("race_name", race.getName());
         MessageManager.sendMessage(session.getPlayer(), MessageKey.RACE_LEAVE_BROADCAST);
       }
     }
@@ -530,15 +523,15 @@ public class RaceSession implements Listener {
   }
 
   public boolean isParticipating(Player player) {
-    return playerSessions.containsKey(player.getUniqueId());
+    return playerSessions.containsKey(player);
   }
 
   public boolean isCurrentlyRacing(Player player) {
-    if(!playerSessions.containsKey(player.getUniqueId())) {
+    if(!playerSessions.containsKey(player)) {
       return false;
     }
 
-    var playerSession = playerSessions.get(player.getUniqueId());
+    var playerSession = playerSessions.get(player);
     return !playerSession.isRestored();
   }
 
@@ -548,7 +541,7 @@ public class RaceSession implements Listener {
 
   public void participate(Player player, double chargedEntryFee) {
     var session = new RacePlayerSession(this, player, chargedEntryFee);
-    playerSessions.put(player.getUniqueId(), session);
+    playerSessions.put(player, session);
     numJoinedParticipants += 1;
     Bukkit.getPluginManager().callEvent(new ParticipateEvent(this, session));
     tryAndSkipToCountdown();
@@ -607,7 +600,7 @@ public class RaceSession implements Listener {
                 MessageManager.setValue("ordinal", playerSession.getCurrentLap());
                 message = MessageManager.getMessage(MessageKey.RACE_NEXT_LAP);
               }
-              player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
+              player.sendActionBar(TextComponent.fromLegacyText(message));
             }
           } else {
             playerSession.setNextCheckpoint(race.getCheckpoint(nextCheckpoint.getPosition() + 1));
@@ -641,7 +634,7 @@ public class RaceSession implements Listener {
       return;
     }
 
-    var playerSession = playerSessions.get(player.getUniqueId());
+    var playerSession = playerSessions.get(player);
 
     if(state == RaceSessionState.COUNTDOWN || state == RaceSessionState.STARTED) {
       tryIncrementCheckpoint(playerSession);
@@ -658,7 +651,7 @@ public class RaceSession implements Listener {
   @EventHandler
   void onPlayerMove(PlayerMoveEvent event) {
     if(isCurrentlyRacing(event.getPlayer()) && (state == RaceSessionState.COUNTDOWN || state == RaceSessionState.STARTED)) {
-      var playerSession = playerSessions.get(event.getPlayer().getUniqueId());
+      var playerSession = playerSessions.get(event.getPlayer());
 
       if(playerSession.isRestored()) {
         return;
@@ -713,18 +706,9 @@ public class RaceSession implements Listener {
   void onPlayerKick(PlayerKickEvent event) {
     var player = event.getPlayer();
     if(isCurrentlyRacing(player) && (state == RaceSessionState.COUNTDOWN || state == RaceSessionState.STARTED)) {
-      playerSessions.get(player.getUniqueId()).restore();
-      playerSessions.remove(player.getUniqueId());
+      playerSessions.get(player).restore();
+      playerSessions.remove(player);
       checkFinished();
-    }
-  }
-
-  @EventHandler
-  void onPlayerJoin(PlayerJoinEvent event) {
-    if(isParticipating(event.getPlayer()) && state == RaceSessionState.PREPARING) {
-      var playerSession = playerSessions.get(event.getPlayer().getUniqueId());
-     playerSession.setPlayer(event.getPlayer());
-     tryAndSkipToCountdown();
     }
   }
 
@@ -736,25 +720,7 @@ public class RaceSession implements Listener {
       return;
     }
 
-    RacingPlugin.debug("Player %s left during race.", event.getPlayer().getName());
-    var playerSession = playerSessions.get(player.getUniqueId());
-
-    if (state == RaceSessionState.PREPARING) {
-      playerSession.setPlayer(null);
-      return;
-    }
-
-    playerSession.restore();
-    playerSessions.remove(player.getUniqueId());
-
-    for(var session : playerSessions.values()) {
-      MessageManager.setValue("player_name", player.getName());
-      MessageManager.sendMessage(session.getPlayer(), MessageKey.QUIT_DISQUALIFIED);
-    }
-
-    if(playerSessions.isEmpty()) {
-      checkFinished();
-    }
+    leave(player);
   }
 
   @EventHandler
@@ -774,7 +740,7 @@ public class RaceSession implements Listener {
       event.setCancelled(true);
       player.setFoodLevel(RacePlayerSession.MAX_FOOD_LEVEL);
       player.setHealth(RacePlayerSession.MAX_HEALTH);
-      var playerSession = playerSessions.get(player.getUniqueId());
+      var playerSession = playerSessions.get(player);
       switch (respawnType) {
         case FROM_LAST_CHECKPOINT:
         case FROM_START:
@@ -787,7 +753,7 @@ public class RaceSession implements Listener {
           }
 
           playerSession.restore();
-          playerSessions.remove(player.getUniqueId());
+          playerSessions.remove(player);
           player.setFallDistance(0);
           PaperLib.teleportAsync(player, race.getSpawn(), PlayerTeleportEvent.TeleportCause.PLUGIN);
           MessageManager.sendMessage(player, MessageKey.DEATH_DISQUALIFIED_TARGET);
@@ -818,7 +784,7 @@ public class RaceSession implements Listener {
       return;
     }
 
-    var session = playerSessions.get(player.getUniqueId());
+    var session = playerSessions.get(player);
     switch (race.getType()) {
       case PLAYER:
       case ELYTRA:
@@ -839,9 +805,7 @@ public class RaceSession implements Listener {
       // because the player attempted to mount another vehicle, they become automatically dismounted from their current vehicle
       if(session.getVehicle() != event.getVehicle()) {
         // remount them onto their real vehicle
-        Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> {
-          session.enterVehicle(session.getVehicle());
-        });
+        Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), () -> session.enterVehicle(session.getVehicle()));
       }
 
       return;
@@ -874,7 +838,7 @@ public class RaceSession implements Listener {
       return;
     }
 
-    if(!playerSessions.get(player.getUniqueId()).isAllowedToExitVehicle()) {
+    if(!playerSessions.get(player).isAllowedToExitVehicle()) {
       event.setCancelled(true);
     }
   }
@@ -953,7 +917,7 @@ public class RaceSession implements Listener {
       return;
     }
 
-    var playerSession = playerSessions.get(event.getPlayer().getUniqueId());
+    var playerSession = playerSessions.get(event.getPlayer());
     var respawnType = getRespawnInteractType(race.getType());
     if(respawnType == RespawnType.FROM_LAST_CHECKPOINT || respawnType == RespawnType.FROM_START) {
       playerSession.respawn(respawnType, null, null);
@@ -976,18 +940,7 @@ public class RaceSession implements Listener {
     }
 
     if(!event.isGliding()) {
-      playerSessions.get(player.getUniqueId()).respawn(RespawnType.FROM_START, null, null);
-    }
-  }
-
-  @EventHandler
-  void onCheckpointReached(CheckpointReachedEvent event) {
-    if (event.getRaceSession() != this) {
-      return;
-    }
-    if (event.getPlayerSession().getNextCheckpoint() != null) {
-      //Vector v = event.getPlayerSession().getPlayer().getVelocity();
-      //event.getPlayerSession().getPlayer().setVelocity(v.multiply(5));
+      playerSessions.get(player).respawn(RespawnType.FROM_START, null, null);
     }
   }
 
