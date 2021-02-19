@@ -209,13 +209,14 @@ validators:
   hd_top_list_not_found: "§cThere is not hologram top list with name `<name>`."
 
 race_canceled: "§cPretek bol zrušený z dôvodu nedostatku uchádzačov."
-race_start_noshow_disqualified: "§e<player_name> chýbal a teraz bol diskvalifikovaný."
 race_start_gamemode_disqualified: "§e<player_name> bol v zakázanom hernom móde a teraz bol diskvalifikovaný."
 race_start_gamemode_disqualified_target: "§eBol si diskvalifikovaný, kedže si bol v zakázanom hernom móde."
 race_death_disqualified: "§e<player_name> zomrel počas preteku a teraz je diskvalifikovaný."
 race_death_disqualified_target: "§eZomrel si, tým pádom si diskvalifikovaný. Veľa štastia nabudúce."
 edit_no_edit_mode: "§cNemôžeš upraviť pretek `<race_name>` pretože nie je vo výstavbe. Napíš §7/rc setstate <race_name> under_construction§c pre umiestnenie do výstavby."
+race_result_header: "§eResult of race §a<race_name>"
 race_participant_result: "§6#<position>. §e<player_name> vyhral pretek §a<race_name>§e s časom <time>."
+race_participant_result_no_complete: "§7- §e<player_name> didn't finish."
 race_participate_click_text: "/rc join <race_name>"
 race_participate_hover_text: "Klikni sem pre účasť."
 race_participate_text: |

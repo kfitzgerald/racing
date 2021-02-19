@@ -209,13 +209,14 @@ validators:
   hd_top_list_not_found: "§cThere is not hologram top list with name `<name>`."
 
 race_canceled: "§cRace has been cancelled due to lack of participants."
-race_start_noshow_disqualified: "§e<player_name> was absent and is now disqualified."
 race_start_gamemode_disqualified: "§e<player_name> is in a forbidden game mode and is now disqualified."
 race_start_gamemode_disqualified_target: "§eYou were disqualified since you are in a forbidden game mode."
 race_death_disqualified: "§e<player_name> died during the race and is now disqualified."
-race_death_disqualified_target: "§eYou died and is therefore disqualified. Better luck next time."
+race_death_disqualified_target: "§eYou died and is therefore disqualified."
 edit_no_edit_mode: "§cYou can't change race `<race_name>` because it's not under construction. Type §7/rc setstate <race_name> under_construction§c to put it under construction."
-race_participant_result: "§6#<position>. §e<player_name> has finished race §a<race_name>§e with time <time>."
+race_result_header: "§eResult of race §a<race_name>"
+race_participant_result: "§6#<position>. §e<player_name> finished with time <time>."
+race_participant_result_no_complete: "§7- §e<player_name> didn't finish."
 race_participate_click_text: "/racing join <race_name>"
 race_participate_hover_text: "Click here to participate."
 race_participate_text: |

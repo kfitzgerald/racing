@@ -5,8 +5,8 @@ description: With Racing you can compete against other players in custom made ra
 author: hornta
 website: https://github.com/TrollskogenMC/racing
 main: com.github.hornta.racing.RacingPlugin
-depend: [ProtocolLib]
-softdepend: [NoteBlockAPI, HolographicDisplays, Vault, mcMMO]
+depend: [ ProtocolLib ]
+softdepend: [ NoteBlockAPI, HolographicDisplays, Vault, mcMMO ]
 commands:
   racing:
     aliases:

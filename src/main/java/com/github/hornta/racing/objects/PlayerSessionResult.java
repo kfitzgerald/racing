@@ -1,25 +1,45 @@
 package com.github.hornta.racing.objects;
 
+import java.util.UUID;
+
 public class PlayerSessionResult {
-  private final RacePlayerSession playerSession;
-  private final int position;
-  private final long time;
+	private final UUID playerId;
+	private final int lastLap;
+	private final RaceCheckpoint lastCheckpoint;
+	private final long raceDuration;
+	private final boolean completedRace;
+	private final long fastestLapDuration;
 
-  PlayerSessionResult(RacePlayerSession playerSession, int position, long time) {
-    this.playerSession = playerSession;
-    this.position = position;
-    this.time = time;
-  }
+	PlayerSessionResult(UUID playerId, long raceDuration, int lastLap, RaceCheckpoint lastCheckpoint, boolean completedRace, long fastestLapDuration) {
+		this.playerId = playerId;
+		this.raceDuration = raceDuration;
+		this.lastLap = lastLap;
+		this.lastCheckpoint = lastCheckpoint;
+		this.completedRace = completedRace;
+		this.fastestLapDuration = fastestLapDuration;
+	}
 
-  public RacePlayerSession getPlayerSession() {
-    return playerSession;
-  }
+	public long getFastestLapDuration() {
+		return fastestLapDuration;
+	}
 
-  public int getPosition() {
-    return position;
-  }
+	public boolean hasCompletedRace() {
+		return completedRace;
+	}
 
-  public long getTime() {
-    return time;
-  }
+	public RaceCheckpoint getLastCheckpoint() {
+		return lastCheckpoint;
+	}
+
+	public int getLastLap() {
+		return lastLap;
+	}
+
+	public UUID getPlayerId() {
+		return playerId;
+	}
+
+	public long getRaceDuration() {
+		return raceDuration;
+	}
 }

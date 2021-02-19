@@ -209,13 +209,14 @@ validators:
   hd_top_list_not_found: "§cDet finns ingen holografisk topplista med namnet: `<name>`."
 
 race_canceled: "§cRacet har blivit inställt p.g.a. för få deltagande."
-race_start_noshow_disqualified: "§e<player_name> uteblev från racet och är därmed diskvalificerad."
 race_start_gamemode_disqualified: "§e<player_name> befanns sig i ett förbjudet spelläge vid start och är därmed diskvalificerad."
 race_start_gamemode_disqualified_target: "§eDu blev diskvalificerad eftersom du befann dig i ett förbjudet spelläge vid start."
 race_death_disqualified: "§e<player_name> dog och är därmed diskvalificerad."
-race_death_disqualified_target: "§eDu dog och är därmed diskvalificerad. Bättre lycka nästa gång."
+race_death_disqualified_target: "§eDu dog och är därmed diskvalificerad."
 edit_no_edit_mode: "§cDu kan inte ändra på race `<race_name>` eftersom racet inte är under konstruktion. Skriv §7/rc setstate <race_name> under_construction§c för att sätta det under konstruktion."
+race_result_header: "§eResultat för race §a<race_name>"
 race_participant_result: "§6#<position>. §e<player_name> har vunnit race §a<race_name>§e med tiden <time>."
+race_participant_result_no_complete: "§7- §e<player_name> slutförde inte."
 race_participate_click_text: "/rc join <race_name>"
 race_participate_hover_text: "Klicka för att delta"
 race_participate_text: |

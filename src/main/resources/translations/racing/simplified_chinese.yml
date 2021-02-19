@@ -209,13 +209,14 @@ validators:
   hd_top_list_not_found: "§c没有名为`<name>`的全息排行榜。"
 
 race_canceled: §e玩家不足，竞赛取消.
-race_start_noshow_disqualified: §e<player_name>缺席竞赛，已取消竞赛资格。
 race_start_gamemode_disqualified: "§e<player_name>由于使用了被禁用的游戏模式而被取消参赛资格。"
 race_start_gamemode_disqualified_target: "§e由于你使用了被禁用的游戏模式，你失去了参赛资格。"
 race_death_disqualified: "§e<player_name>在竞赛中死亡而失去了竞赛资格。"
 race_death_disqualified_target: "§e你死了，你输掉了竞赛。下次好运。"
 edit_no_edit_mode: §c不在维护模式中你无法更改竞赛 `<race_name>`。 请输入 §7/rc setstate <race_name> under_construction§c将竞赛置入维护模式.
+race_result_header: "§eResult of race §a<race_name>"
 race_participant_result: "§6#<position>。 §e<player_name>用时<time>赢得了竞赛§a<race_name>§e。"
+race_participant_result_no_complete: "§7- §e<player_name> didn't finish."
 race_participate_click_text: /rc join <race_name>
 race_participate_hover_text: 点击参加
 race_participate_text: |

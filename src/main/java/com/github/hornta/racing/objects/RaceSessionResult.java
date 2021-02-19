@@ -2,31 +2,27 @@ package com.github.hornta.racing.objects;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class RaceSessionResult {
-  private final RaceSession raceSession;
-  private final Map<RacePlayerSession, PlayerSessionResult> playerResults = new HashMap<>();
-  private final Map<Integer, PlayerSessionResult> resultsByPosition = new HashMap<>();
+	private final RaceSession raceSession;
+	private final Map<UUID, PlayerSessionResult> playerResults;
 
-  public RaceSessionResult(RaceSession raceSession) {
-    this.raceSession = raceSession;
-  }
+	public RaceSessionResult(RaceSession raceSession) {
+		this.raceSession = raceSession;
+		playerResults = new HashMap<>();
+	}
 
-  public RaceSession getRaceSession() {
-    return raceSession;
-  }
+	public RaceSession getRaceSession() {
+		return raceSession;
+	}
 
-  public void addPlayerSessionResult(RacePlayerSession playerSession, int position, long time) {
-    PlayerSessionResult result = new PlayerSessionResult(playerSession, position, time);
-    playerResults.put(playerSession, result);
-    resultsByPosition.put(result.getPosition(), result);
-  }
+	public void addPlayerSessionResult(RacePlayerSession playerSession, long raceDuration, boolean completedRace) {
+		var result = new PlayerSessionResult(playerSession.getPlayer().getUniqueId(), raceDuration, playerSession.getCurrentLap(), playerSession.getCurrentCheckpoint(), completedRace, playerSession.getFastestLap());
+		playerResults.put(playerSession.getPlayer().getUniqueId(), result);
+	}
 
-  public PlayerSessionResult getResult(int position) {
-    return resultsByPosition.get(position);
-  }
-
-  public Map<RacePlayerSession, PlayerSessionResult> getPlayerResults() {
-    return playerResults;
-  }
+	public Map<UUID, PlayerSessionResult> getPlayerResults() {
+		return playerResults;
+	}
 }

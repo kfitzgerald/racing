@@ -5,410 +5,369 @@ import com.github.hornta.racing.enums.RaceState;
 import com.github.hornta.racing.enums.RaceType;
 import com.github.hornta.racing.enums.RaceVersion;
 import com.github.hornta.racing.enums.StartOrder;
-
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.event.Listener;
 import org.bukkit.potion.PotionEffectType;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class Race implements Listener {
-  private final UUID id;
-  private final RaceVersion version;
-  private String name;
-  private Location spawn;
-  private List<RaceCheckpoint> checkpoints;
-  private List<RaceStartPoint> startPoints;
-  private RaceState state;
-  private final Instant createdAt;
-  private RaceType type;
-  private StartOrder startOrder;
-  private String song;
-  private double entryFee;
-  private float walkSpeed;
-  private final Set<RacePotionEffect> potionEffects;
-  private final Set<RaceSign> signs;
-  private final int minimimRequiredParticipantsToStart;
-  private double pigSpeed;
-  private double striderSpeed;
-  private double horseSpeed;
-  private double horseJumpStrength;
+	private final UUID id;
+	private final RaceVersion version;
+	private final Instant createdAt;
+	private final Set<RacePotionEffect> potionEffects;
+	private final Set<RaceSign> signs;
+	private final int minimimRequiredParticipantsToStart;
+	private final Map<UUID, RacePlayerStatistic> resultByPlayerId = new HashMap<>();
+	private final Map<RaceStatType, Set<RacePlayerStatistic>> resultsByStat = new HashMap<>();
+	private final List<RaceCommand> commands;
+	private String name;
+	private Location spawn;
+	private List<RaceCheckpoint> checkpoints;
+	private List<RaceStartPoint> startPoints;
+	private RaceState state;
+	private RaceType type;
+	private StartOrder startOrder;
+	private String song;
+	private double entryFee;
+	private float walkSpeed;
+	private double pigSpeed;
+	private double striderSpeed;
+	private double horseSpeed;
+	private double horseJumpStrength;
 
-  private final Map<UUID, RacePlayerStatistic> resultByPlayerId = new HashMap<>();
-  private final Map<RaceStatType, Set<RacePlayerStatistic>> resultsByStat = new HashMap<>();
-  private final List<RaceCommand> commands;
+	public Race(UUID id, RaceVersion version, String name, Location spawn, RaceState state, Instant createdAt, List<RaceCheckpoint> checkpoints, List<RaceStartPoint> startPoints, RaceType type, StartOrder startOrder, String song, double entryFee, float walkSpeed, Set<RacePotionEffect> potionEffects, Set<RaceSign> signs, Set<RacePlayerStatistic> results, int minimimRequiredParticipantsToStart, double pigSpeed, double striderSpeed, double horseSpeed, double horseJumpStrength, List<RaceCommand> commands) {
+		this.id = id;
+		this.version = version;
+		this.name = name;
+		this.spawn = spawn;
+		this.state = state;
+		this.createdAt = createdAt;
+		this.checkpoints = new ArrayList<>(checkpoints);
+		this.startPoints = new ArrayList<>(startPoints);
+		this.type = type;
+		this.startOrder = startOrder;
+		this.song = song;
+		this.entryFee = entryFee;
+		this.walkSpeed = walkSpeed;
+		this.potionEffects = potionEffects;
+		this.signs = signs;
+		this.minimimRequiredParticipantsToStart = minimimRequiredParticipantsToStart;
+		this.pigSpeed = pigSpeed;
+		this.striderSpeed = striderSpeed;
+		this.horseSpeed = horseSpeed;
+		this.horseJumpStrength = horseJumpStrength;
+		for (var playerStatistic : results) {
+			resultByPlayerId.put(playerStatistic.getPlayerId(), playerStatistic);
+		}
+		for (var statType : RaceStatType.values()) {
+			Set<RacePlayerStatistic> stats = new TreeSet<>((RacePlayerStatistic o1, RacePlayerStatistic o2) -> {
+				int order;
+				switch (statType) {
+					case WINS:
+						order = o2.getWins() - o1.getWins();
+						break;
+					case FASTEST_LAP:
+						order = (int) (o1.getFastestLap() - o2.getFastestLap());
+						break;
+					case WIN_RATIO:
+						order = (int) ((float) o2.getWins() / (o2.getRuns() - o2.getSingleRuns()) * 100 - (float) o1.getWins() / (o1.getRuns() - o1.getSingleRuns()) * 100);
+						break;
+					case RUNS:
+						order = o2.getRuns() - o1.getRuns();
+						break;
+					case FASTEST:
+						//can't do anything here, as we would have to create many sorted results for 1 stat type
+					default:
+						order = 0;
+				}
+				if (order == 0) {
+					return o1.getPlayerId().compareTo(o2.getPlayerId());
+				} else {
+					return order;
+				}
+			});
+			resultsByStat.put(statType, stats);
+			stats.addAll(results);
+		}
+		this.commands = commands;
+	}
 
-  public Race(
-    UUID id,
-    RaceVersion version,
-    String name,
-    Location spawn,
-    RaceState state,
-    Instant createdAt,
-    List<RaceCheckpoint> checkpoints,
-    List<RaceStartPoint> startPoints,
-    RaceType type,
-    StartOrder startOrder,
-    String song,
-    double entryFee,
-    float walkSpeed,
-    Set<RacePotionEffect> potionEffects,
-    Set<RaceSign> signs,
-    Set<RacePlayerStatistic> results,
-    int minimimRequiredParticipantsToStart,
-    double pigSpeed,
-    double striderSpeed,
-    double horseSpeed,
-    double horseJumpStrength,
-    List<RaceCommand> commands
-  ) {
-    this.id = id;
-    this.version = version;
-    this.name = name;
-    this.spawn = spawn;
-    this.state = state;
-    this.createdAt = createdAt;
-    this.checkpoints = new ArrayList<>(checkpoints);
-    this.startPoints = new ArrayList<>(startPoints);
-    this.type = type;
-    this.startOrder = startOrder;
-    this.song = song;
-    this.entryFee = entryFee;
-    this.walkSpeed = walkSpeed;
-    this.potionEffects = potionEffects;
-    this.signs = signs;
-    this.minimimRequiredParticipantsToStart = minimimRequiredParticipantsToStart;
-    this.pigSpeed = pigSpeed;
-    this.striderSpeed = striderSpeed;
-    this.horseSpeed = horseSpeed;
-    this.horseJumpStrength = horseJumpStrength;
+	public void addResult(RaceSessionResult raceResult) {
+		var completedPlayers = raceResult.getPlayerResults().values().stream().filter(PlayerSessionResult::hasCompletedRace).sorted(Comparator.comparingLong(PlayerSessionResult::getRaceDuration)).collect(Collectors.toList());
+		for (var playerResult : raceResult.getPlayerResults().values()) {
+			var playerStatistic = resultByPlayerId.get(playerResult.getPlayerId());
+			RacePlayerStatistic newStat;
+			var wasSingleRun = raceResult.getRaceSession().getNumJoinedParticipants() == 1;
+			var wonRace = completedPlayers.indexOf(playerResult) == 0;
+			var playerName = Bukkit.getOfflinePlayer(playerResult.getPlayerId()).getName();
+			if (playerStatistic == null) {
+				Map<Integer, Long> records = new HashMap<>();
+				records.put(playerResult.getLastLap(), playerResult.getRaceDuration());
+				newStat = new RacePlayerStatistic(playerResult.getPlayerId(), playerName, wonRace && !wasSingleRun ? 1 : 0, 1, wasSingleRun ? 1 : 0, playerResult.getFastestLapDuration(), records);
+			} else {
+				newStat = playerStatistic.clone();
+				newStat.setPlayerName(playerName);
+				newStat.setRuns(newStat.getRuns() + 1);
+				if (wasSingleRun) {
+					newStat.setSingleRuns(newStat.getSingleRuns() + 1);
+				}
+				if (wonRace && !wasSingleRun) {
+					newStat.setWins(newStat.getWins() + 1);
+				}
+				if (newStat.getFastestLap() > playerResult.getFastestLapDuration()) {
+					newStat.setFastestLap(playerResult.getFastestLapDuration());
+				}
+				var laps = playerResult.getLastLap();
+				if (newStat.getRecord(laps) > playerResult.getRaceDuration()) {
+					newStat.setRecord(laps, playerResult.getRaceDuration());
+				}
+			}
+			resultByPlayerId.put(newStat.getPlayerId(), newStat);
+			for (var statType : RaceStatType.values()) {
+				var resultSet = resultsByStat.get(statType);
+				if (playerStatistic != null) {
+					resultSet.remove(playerStatistic);
+				}
+				resultSet.add(newStat);
+			}
+		}
+	}
 
-    for (RacePlayerStatistic playerStatistic : results) {
-      resultByPlayerId.put(playerStatistic.getPlayerId(), playerStatistic);
-    }
+	public void resetResults() {
+		resultByPlayerId.clear();
+		for (var statType : RaceStatType.values()) {
+			resultsByStat.get(statType).clear();
+		}
+	}
 
-    for(RaceStatType statType : RaceStatType.values()) {
-      Set<RacePlayerStatistic> stats = new TreeSet<>((RacePlayerStatistic o1, RacePlayerStatistic o2) -> {
-        int order;
-        switch (statType) {
-          case WINS:
-            order = o2.getWins() - o1.getWins();
-            break;
-          case FASTEST_LAP:
-            order = (int)(o1.getFastestLap() - o2.getFastestLap());
-            break;
-          case WIN_RATIO:
-            order = (int)((float)o2.getWins() / (o2.getRuns() - o2.getSingleRuns()) * 100 - (float)o1.getWins() / (o1.getRuns() - o1.getSingleRuns()) * 100);
-            break;
-          case RUNS:
-            order = o2.getRuns() - o1.getRuns();
-            break;
-          case FASTEST:
-            //can't do anything here, as we would have to create many sorted results for 1 stat type
-          default:
-            order = 0;
-        }
+	public Set<RacePlayerStatistic> getResults(RaceStatType type, int laps) {
+		if (type == RaceStatType.FASTEST) {
+			return getResultsForLapCount(laps);
+		}
+		return resultsByStat.get(type);
+	}
 
-        if(order == 0) {
-          return o1.getPlayerId().compareTo(o2.getPlayerId());
-        } else {
-          return order;
-        }
-      });
-      resultsByStat.put(statType, stats);
-      stats.addAll(results);
-    }
+	public Set<RacePlayerStatistic> getResultsForLapCount(int laps) {
+		Set<RacePlayerStatistic> stats = new TreeSet<>((RacePlayerStatistic o1, RacePlayerStatistic o2) -> {
+			var order = (int) (o1.getRecord(laps) - o2.getRecord(laps));
+			if (order == 0) {
+				return o1.getPlayerId().compareTo(o2.getPlayerId());
+			} else {
+				return order;
+			}
+		});
+		stats.addAll(getResults(RaceStatType.FASTEST_LAP, 0));
+		stats.removeIf(entry -> entry.getRecord(laps) == Long.MAX_VALUE);
+		return stats;
+	}
 
-    this.commands = commands;
-  }
+	public Map<UUID, RacePlayerStatistic> getResultByPlayerId() {
+		return resultByPlayerId;
+	}
 
-  public void addResult(PlayerSessionResult result) {
-    RacePlayerStatistic playerStatistic = resultByPlayerId.get(result.getPlayerSession().getPlayerId());
-    RacePlayerStatistic newStat;
-    boolean wasSingleRun = result.getPlayerSession().getRaceSession().getNumJoinedParticipants() == 1;
-    boolean wonRace = result.getPosition() == 1;
-    if(playerStatistic == null) {
-      Map<Integer, Long> records = new HashMap<>();
-      records.put(result.getPlayerSession().getCurrentLap(), result.getTime());
-      newStat = new RacePlayerStatistic(
-        result.getPlayerSession().getPlayerId(),
-        result.getPlayerSession().getPlayerName(),
-        wonRace && !wasSingleRun ? 1 : 0,
-        1,
-        wasSingleRun ? 1 : 0,
-        result.getPlayerSession().getFastestLap(),
-        records
-      );
-    } else {
-      newStat = playerStatistic.clone();
-      newStat.setPlayerName(result.getPlayerSession().getPlayerName());
-      newStat.setRuns(newStat.getRuns() + 1);
-      if (wasSingleRun) {
-        newStat.setSingleRuns(newStat.getSingleRuns() + 1);
-      }
-      if (wonRace && !wasSingleRun) {
-        newStat.setWins(newStat.getWins() + 1);
-      }
-      if(newStat.getFastestLap() > result.getPlayerSession().getFastestLap()) {
-        newStat.setFastestLap(result.getPlayerSession().getFastestLap());
-      }
-      int laps = result.getPlayerSession().getCurrentLap();
-      if(newStat.getRecord(laps) > result.getTime()) {
-        newStat.setRecord(laps, result.getTime());
-      }
-    }
+	public Set<RaceSign> getSigns() {
+		return signs;
+	}
 
-    resultByPlayerId.put(newStat.getPlayerId(), newStat);
+	public Set<RacePotionEffect> getPotionEffects() {
+		return potionEffects;
+	}
 
-    for (RaceStatType statType : RaceStatType.values()) {
-      Set<RacePlayerStatistic> resultSet = resultsByStat.get(statType);
+	public void addPotionEffect(RacePotionEffect potionEffect) {
+		removePotionEffect(potionEffect.getType());
+		potionEffects.add(potionEffect);
+	}
 
-      if(playerStatistic != null) {
-        resultSet.remove(playerStatistic);
-      }
-      resultSet.add(newStat);
-    }
-  }
+	public void removePotionEffect(PotionEffectType type) {
+		var it = potionEffects.iterator();
+		while (it.hasNext()) {
+			if (it.next().getType() == type) {
+				it.remove();
+				return;
+			}
+		}
+	}
 
-  public void resetResults() {
-    resultByPlayerId.clear();
-    for (RaceStatType statType : RaceStatType.values()) {
-      resultsByStat.get(statType).clear();
-    }
-  }
+	public void clearPotionEffects() {
+		potionEffects.clear();
+	}
 
-  public Set<RacePlayerStatistic> getResults(RaceStatType type, int laps) {
-    if(type == RaceStatType.FASTEST) {
-      return getResultsForLapCount(laps);
-    }
-    return resultsByStat.get(type);
-  }
+	public float getWalkSpeed() {
+		return walkSpeed;
+	}
 
-  public Set<RacePlayerStatistic> getResultsForLapCount(int laps) {
-      Set<RacePlayerStatistic> stats = new TreeSet<>((RacePlayerStatistic o1, RacePlayerStatistic o2) -> {
-        int order = (int)(o1.getRecord(laps) - o2.getRecord(laps));
-        if(order == 0) {
-          return o1.getPlayerId().compareTo(o2.getPlayerId());
-        } else {
-          return order;
-        }
-      });
-      stats.addAll(getResults(RaceStatType.FASTEST_LAP, 0));
-      stats.removeIf(entry -> entry.getRecord(laps) == Long.MAX_VALUE);
-      return stats;   
-  }
+	public void setWalkSpeed(float walkSpeed) {
+		this.walkSpeed = walkSpeed;
+	}
 
-  public Map<UUID, RacePlayerStatistic> getResultByPlayerId() {
-    return resultByPlayerId;
-  }
+	public UUID getId() {
+		return id;
+	}
 
-  public Set<RaceSign> getSigns() {
-    return signs;
-  }
+	public String getName() {
+		return name;
+	}
 
-  public Set<RacePotionEffect> getPotionEffects() {
-    return potionEffects;
-  }
+	public void setName(String name) {
+		this.name = name;
+	}
 
-  public void addPotionEffect(RacePotionEffect potionEffect) {
-    removePotionEffect(potionEffect.getType());
-    potionEffects.add(potionEffect);
-  }
+	public Location getSpawn() {
+		return spawn.clone();
+	}
 
-  public void removePotionEffect(PotionEffectType type) {
-    Iterator<RacePotionEffect> it = potionEffects.iterator();
-    while(it.hasNext()) {
-      if(it.next().getType() == type) {
-        it.remove();
-        return;
-      }
-    }
-  }
+	public void setSpawn(Location spawn) {
+		this.spawn = spawn;
+	}
 
-  public void clearPotionEffects() {
-    potionEffects.clear();
-  }
+	public List<RaceCheckpoint> getCheckpoints() {
+		return new ArrayList<>(checkpoints);
+	}
 
-  public float getWalkSpeed() {
-    return walkSpeed;
-  }
+	public void setCheckpoints(List<RaceCheckpoint> checkpoints) {
+		this.checkpoints = checkpoints;
+	}
 
-  public void setWalkSpeed(float walkSpeed) {
-    this.walkSpeed = walkSpeed;
-  }
+	public List<RaceStartPoint> getStartPoints() {
+		return new ArrayList<>(startPoints);
+	}
 
-  public UUID getId() {
-    return id;
-  }
+	public void setStartPoints(List<RaceStartPoint> startPoints) {
+		this.startPoints = startPoints;
+	}
 
-  public String getName() {
-    return name;
-  }
+	public RaceCheckpoint getCheckpoint(int position) {
+		for (var checkpoint : checkpoints) {
+			if (checkpoint.getPosition() == position) {
+				return checkpoint;
+			}
+		}
+		return null;
+	}
 
-  public void setName(String name) {
-    this.name = name;
-  }
+	public RaceCheckpoint getCheckpoint(Location location) {
+		for (var checkpoint : checkpoints) {
+			if (checkpoint.getLocation().getBlockX() == location.getBlockX() && checkpoint.getLocation().getBlockY() == location.getBlockY() && checkpoint.getLocation().getBlockZ() == location.getBlockZ()) {
+				return checkpoint;
+			}
+		}
+		return null;
+	}
 
-  public Location getSpawn() {
-    return spawn.clone();
-  }
+	public RaceStartPoint getStartPoint(int position) {
+		for (var startPoint : startPoints) {
+			if (startPoint.getPosition() == position) {
+				return startPoint;
+			}
+		}
+		return null;
+	}
 
-  public void setSpawn(Location spawn) {
-    this.spawn = spawn;
-  }
+	public RaceStartPoint getStartPoint(Location location) {
+		for (var startPoint : startPoints) {
+			if (startPoint.getLocation().getBlockX() == location.getBlockX() && startPoint.getLocation().getBlockY() == location.getBlockY() && startPoint.getLocation().getBlockZ() == location.getBlockZ()) {
+				return startPoint;
+			}
+		}
+		return null;
+	}
 
-  public List<RaceCheckpoint> getCheckpoints() {
-    return new ArrayList<>(checkpoints);
-  }
+	public RaceState getState() {
+		return state;
+	}
 
-  public List<RaceStartPoint> getStartPoints() {
-    return new ArrayList<>(startPoints);
-  }
+	public void setState(RaceState state) {
+		this.state = state;
+	}
 
-  public RaceCheckpoint getCheckpoint(int position) {
-    for(RaceCheckpoint checkpoint : checkpoints) {
-      if(checkpoint.getPosition() == position) {
-        return checkpoint;
-      }
-    }
-    return null;
-  }
+	public StartOrder getStartOrder() {
+		return startOrder;
+	}
 
-  public RaceCheckpoint getCheckpoint(Location location) {
-    for(RaceCheckpoint checkpoint : checkpoints) {
-      if(
-        checkpoint.getLocation().getBlockX() == location.getBlockX() &&
-        checkpoint.getLocation().getBlockY() == location.getBlockY() &&
-        checkpoint.getLocation().getBlockZ() == location.getBlockZ()) {
-        return checkpoint;
-      }
-    }
-    return null;
-  }
+	public void setStartOrder(StartOrder order) {
+		startOrder = order;
+	}
 
-  public RaceStartPoint getStartPoint(int position) {
-    for(RaceStartPoint startPoint : startPoints) {
-      if(startPoint.getPosition() == position) {
-        return startPoint;
-      }
-    }
-    return null;
-  }
+	public Instant getCreatedAt() {
+		return createdAt;
+	}
 
-  public RaceStartPoint getStartPoint(Location location) {
-    for(RaceStartPoint startPoint : startPoints) {
-      if(
-        startPoint.getLocation().getBlockX() == location.getBlockX() &&
-        startPoint.getLocation().getBlockY() == location.getBlockY() &&
-        startPoint.getLocation().getBlockZ() == location.getBlockZ()
-      ) {
-        return startPoint;
-      }
-    }
-    return null;
-  }
+	public RaceType getType() {
+		return type;
+	}
 
-  public RaceState getState() {
-    return state;
-  }
+	public void setType(RaceType type) {
+		this.type = type;
+	}
 
-  public void setState(RaceState state) {
-    this.state = state;
-  }
+	public String getSong() {
+		return song;
+	}
 
-  public StartOrder getStartOrder() {
-    return startOrder;
-  }
+	public void setSong(String song) {
+		this.song = song;
+	}
 
-  public void setStartOrder(StartOrder order) {
-    startOrder = order;
-  }
+	public double getEntryFee() {
+		return entryFee;
+	}
 
-  public Instant getCreatedAt() {
-    return createdAt;
-  }
+	public void setEntryFee(double entryFee) {
+		this.entryFee = entryFee;
+	}
 
-  public void setStartPoints(List<RaceStartPoint> startPoints) {
-    this.startPoints = startPoints;
-  }
+	public RaceVersion getVersion() {
+		return version;
+	}
 
-  public void setCheckpoints(List<RaceCheckpoint> checkpoints) {
-    this.checkpoints = checkpoints;
-  }
+	public int getMinimimRequiredParticipantsToStart() {
+		return minimimRequiredParticipantsToStart;
+	}
 
-  public RaceType getType() {
-    return type;
-  }
+	public double getPigSpeed() {
+		return pigSpeed;
+	}
 
-  public void setType(RaceType type) {
-    this.type = type;
-  }
+	public void setPigSpeed(double pigSpeed) {
+		this.pigSpeed = pigSpeed;
+	}
 
-  public String getSong() {
-    return song;
-  }
+	public double getStriderSpeed() {
+		return striderSpeed;
+	}
 
-  public void setSong(String song) {
-    this.song = song;
-  }
+	public void setStriderSpeed(double striderSpeed) {
+		this.striderSpeed = striderSpeed;
+	}
 
-  public double getEntryFee() {
-    return entryFee;
-  }
+	public double getHorseJumpStrength() {
+		return horseJumpStrength;
+	}
 
-  public void setEntryFee(double entryFee) {
-    this.entryFee = entryFee;
-  }
+	public void setHorseJumpStrength(double horseJumpStrength) {
+		this.horseJumpStrength = horseJumpStrength;
+	}
 
-  public RaceVersion getVersion() {
-    return version;
-  }
+	public double getHorseSpeed() {
+		return horseSpeed;
+	}
 
-  public int getMinimimRequiredParticipantsToStart() {
-    return minimimRequiredParticipantsToStart;
-  }
+	public void setHorseSpeed(double horseSpeed) {
+		this.horseSpeed = horseSpeed;
+	}
 
-  public double getPigSpeed() {
-    return pigSpeed;
-  }
-
-  public double getStriderSpeed() {
-    return striderSpeed;
-  }
-
-  public void setPigSpeed(double pigSpeed) {
-    this.pigSpeed = pigSpeed;
-  }
-
-  public void setStriderSpeed(double striderSpeed) {
-    this.striderSpeed = striderSpeed;
-  }
-
-  public double getHorseJumpStrength() {
-    return horseJumpStrength;
-  }
-
-  public void setHorseJumpStrength(double horseJumpStrength) {
-    this.horseJumpStrength = horseJumpStrength;
-  }
-
-  public double getHorseSpeed() {
-    return horseSpeed;
-  }
-
-  public void setHorseSpeed(double horseSpeed) {
-    this.horseSpeed = horseSpeed;
-  }
-
-  public List<RaceCommand> getCommands() {
-    return commands;
-  }
+	public List<RaceCommand> getCommands() {
+		return commands;
+	}
 }
