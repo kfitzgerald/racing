@@ -3,3 +3,4 @@ server/*
 target
 .idea
 racing-*.jar
+*.iml
