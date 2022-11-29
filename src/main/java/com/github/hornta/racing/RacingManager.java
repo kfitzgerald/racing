@@ -1,6 +1,5 @@
 package com.github.hornta.racing;
 
-import com.comphenix.protocol.ProtocolLibrary;
 import com.github.hornta.racing.api.RacingAPI;
 import com.github.hornta.racing.enums.JoinType;
 import com.github.hornta.racing.enums.Permission;
@@ -30,7 +29,6 @@ import com.github.hornta.racing.events.UnloadRaceEvent;
 import com.github.hornta.racing.features.AllowTeleport;
 import com.github.hornta.racing.features.DamageParticipants;
 import com.github.hornta.racing.features.FoodLevel;
-import com.github.hornta.racing.features.Remount;
 import com.github.hornta.racing.features.TeleportOnLeave;
 import com.github.hornta.racing.objects.PlayerSessionResult;
 import com.github.hornta.racing.objects.Race;
