@@ -202,7 +202,7 @@ public class RaceSession implements Listener {
 			if (RacingPlugin.getInstance().getConfiguration().get(ConfigKey.BROADCAST_CANCEL_MESSAGE)) {
 				MessageManager.broadcast(MessageKey.RACE_CANCELED);
 			}
-			stop();
+			stop(false);
 			return;
 		}
 		setState(RaceSessionState.COUNTDOWN);
@@ -255,6 +255,7 @@ public class RaceSession implements Listener {
 			for (var racePotionEffect : race.getPotionEffects()) {
 				potionEffects.add(new PotionEffect(racePotionEffect.getType(), Integer.MAX_VALUE, racePotionEffect.getAmplifier(), false, false, false));
 			}
+
 			for (var session : playerSessions.values()) {
 				session.startRace();
 				var type = getRespawnInteractType(race.getType());
@@ -372,9 +373,9 @@ public class RaceSession implements Listener {
 		}
 	}
 
-	public void stop() {
+	public void stop(Boolean cancelled) {
 		beforeStopCleanup();
-		Bukkit.getPluginManager().callEvent(new RaceSessionStopEvent(this));
+		Bukkit.getPluginManager().callEvent(new RaceSessionStopEvent(this, cancelled));
 		playerSessions.clear();
 	}
 
@@ -544,6 +545,8 @@ public class RaceSession implements Listener {
 			tryIncrementCheckpoint(playerSession);
 		}
 		if (state == RaceSessionState.COUNTDOWN && playerSession.getStartLocation().distanceSquared(event.getTo()) >= 1) {
+
+			RacingPlugin.debug("onVehicleMove triggering respawn: " + playerSession.getStartLocation().distanceSquared(event.getTo()));
 			playerSession.respawnInVehicle();
 			if (race.getType() == RaceType.HORSE) {
 				playerSession.freezeHorse();
@@ -566,6 +569,7 @@ public class RaceSession implements Listener {
 			}
 			if (playerSession.getVehicle() != null) {
 				if (playerSession.getStartLocation().distanceSquared(event.getTo()) >= 1) {
+					RacingPlugin.debug("onPlayerMove triggering respawn: " + playerSession.getStartLocation().distanceSquared(event.getTo()) );
 					playerSession.respawnInVehicle();
 					if (race.getType() == RaceType.HORSE) {
 						playerSession.freezeHorse();
@@ -635,6 +639,7 @@ public class RaceSession implements Listener {
 					playerSessions.remove(player);
 					player.setFallDistance(0);
 					PaperLib.teleportAsync(player, race.getSpawn(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+					playerSession.setTeleportedBackToSpawn();
 					MessageManager.sendMessage(player, MessageKey.DEATH_DISQUALIFIED_TARGET);
 					for (var session : playerSessions.values()) {
 						MessageManager.setValue("player_name", player.getName());
@@ -805,7 +810,7 @@ public class RaceSession implements Listener {
 			}
 		}
 		if (allFinished) {
-			stop();
+			stop(false);
 			Bukkit.getPluginManager().callEvent(new RaceSessionResultEvent(result));
 			Bukkit.getPluginManager().callEvent(new ExecuteCommandEvent(RaceCommandType.ON_RACE_FINISH, this));
 		}

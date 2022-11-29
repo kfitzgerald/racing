@@ -47,6 +47,7 @@ public class RacePlayerSession {
 	private long personalBestLapTime = Long.MAX_VALUE;
 	private boolean allowedToEnterVehicle;
 	private boolean allowedToExitVehicle;
+	private boolean teleportedBackToSpawn;
 	private RaceParticipantReset restore;
 
 	RacePlayerSession(RaceSession raceSession, Player player, double chargedEntryFee) {
@@ -65,6 +66,15 @@ public class RacePlayerSession {
 	public void setLapStartTime(long millis) {
 		lapStartTime = millis;
 	}
+
+	public void setTeleportedBackToSpawn() {
+		teleportedBackToSpawn = true;
+	}
+
+	public boolean hasTeleportedBackToSpawn() {
+		return teleportedBackToSpawn;
+	}
+
 
 	public void setFastestLapTime(long millis) {
 		if (millis < fastestLap) {
@@ -127,6 +137,9 @@ public class RacePlayerSession {
 			player.getInventory().setItemInMainHand(new ItemStack(Material.WARPED_FUNGUS_ON_A_STICK, 1));
 		} else if (vehicle instanceof Horse) {
 			unfreezeHorse();
+		} else if (vehicle instanceof Boat) {
+			// unbug 1.17 clients stuck in limbo
+			Bukkit.getScheduler().scheduleSyncDelayedTask(RacingPlugin.getInstance(), this::respawnInVehicle, 2L);
 		}
 		if (raceSession.getRace().getType() == RaceType.ELYTRA) {
 			player.getInventory().setChestplate(new ItemStack(Material.ELYTRA, 1));
@@ -175,7 +188,7 @@ public class RacePlayerSession {
 			case ELYTRA:
 			case PLAYER:
 			default:
-				//no vehichle, do nothing, intentional fall throughs.
+				//no vehicle, do nothing, intentional fall throughs.
 				break;
 		}
 		if (vehicle != null) {

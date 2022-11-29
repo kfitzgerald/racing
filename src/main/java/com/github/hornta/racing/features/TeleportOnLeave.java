@@ -19,6 +19,7 @@ public class TeleportOnLeave implements Listener {
         event.getRaceSession().getRace().getSpawn(),
         PlayerTeleportEvent.TeleportCause.PLUGIN
       );
+      event.getPlayerSession().setTeleportedBackToSpawn();
     }
   }
 }

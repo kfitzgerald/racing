@@ -109,6 +109,9 @@ commands:
     success: "§eYou have left race `<race_name>` and were moved to the race spawn point."
     leave_broadcast: "§e<player_name> has left the race."
     leave_payback: "§eYou have been paid your entry fee of <entry_fee> back."
+  race_respawn:
+    error_not_participating: "§cYou are not participating in any race."
+    success: "§eYou have respawned at the last checkpoint."
   race_info:
     success: |
       §6§m----§r§6[ §eRace Info §6]§m----

@@ -81,12 +81,12 @@ public class RacingManager implements Listener {
 		pluginManager.registerEvents(new AllowTeleport(), RacingPlugin.getInstance());
 		pluginManager.registerEvents(new FoodLevel(), RacingPlugin.getInstance());
 		pluginManager.registerEvents(new DamageParticipants(), RacingPlugin.getInstance());
-		ProtocolLibrary.getProtocolManager().addPacketListener(new Remount());
+//		ProtocolLibrary.getProtocolManager().addPacketListener(new Remount());
 	}
 
 	public void shutdown() {
 		for (var raceSession : raceSessions) {
-			raceSession.stop();
+			raceSession.stop(true);
 		}
 		raceSessions.clear();
 	}
@@ -281,9 +281,19 @@ public class RacingManager implements Listener {
 			if (when == TeleportAfterRaceWhen.EVERYONE_FINISHES) {
 				for (var playerSession : event.getRaceSession().getPlayerSessions()) {
 					PaperLib.teleportAsync(playerSession.getPlayer(), event.getRaceSession().getRace().getSpawn(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+					playerSession.setTeleportedBackToSpawn();
+				}
+			} else if (event.getRaceCancelled()) {
+				// Teleport unfinished players if teleport after finish is on
+				for (var playerSession : event.getRaceSession().getPlayerSessions()) {
+					if (!playerSession.hasTeleportedBackToSpawn()) {
+						PaperLib.teleportAsync(playerSession.getPlayer(), event.getRaceSession().getRace().getSpawn(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+						playerSession.setTeleportedBackToSpawn();
+					}
 				}
 			}
 		}
+		RacingPlugin.logger().info("onRaceSessionStop called, cancelled="+event.getRaceCancelled());
 	}
 
 	@EventHandler
@@ -370,6 +380,7 @@ public class RacingManager implements Listener {
 			var when = TeleportAfterRaceWhen.valueOf(whenString.toUpperCase(Locale.ENGLISH));
 			if (when == TeleportAfterRaceWhen.PARTICIPANT_FINISHES) {
 				PaperLib.teleportAsync(event.getPlayerSession().getPlayer(), event.getRaceSession().getRace().getSpawn(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+				event.getPlayerSession().setTeleportedBackToSpawn();
 			}
 		}
 	}

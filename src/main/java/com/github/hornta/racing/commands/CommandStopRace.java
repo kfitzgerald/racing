@@ -28,7 +28,7 @@ public class CommandStopRace extends RacingCommand implements ICommandHandler {
     }
 
     for(RaceSession session : sessions) {
-      session.stop();
+      session.stop(true);
     }
 
     if(RacingPlugin.getInstance().getConfiguration().get(ConfigKey.BROADCAST_STOP_MESSAGE)) {

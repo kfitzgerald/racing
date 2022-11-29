@@ -42,6 +42,7 @@ public enum Permission {
   COMMAND_STOP("racing.command.stop"),
   COMMAND_SKIPWAIT("racing.command.skipwait"),
   COMMAND_LEAVE("racing.command.leave"),
+  COMMAND_RESPAWN("racing.command.respawn"),
   COMMAND_RELOAD("racing.command.reload"),
   COMMAND_HELP("racing.command.help"),
   COMMAND_INFO("racing.command.info"),
